@@ -6,6 +6,23 @@ import path from "node:path";
 const logger = pino();
 
 /**
+ * @typedef {{
+ *   session: {
+ *     findMany: (input: {
+ *       where: {
+ *         userId: string,
+ *         revokedAt: null,
+ *         fcmToken: { not: null },
+ *         expiresAt: { gt: Date }
+ *       },
+ *       select: { id: true, fcmToken: true, deviceId: true }
+ *     }) => Promise<Array<{ id: string, fcmToken: string, deviceId: string | null }>>,
+ *     update: (input: { where: { id: string }, data: { revokedAt: Date } }) => Promise<unknown>
+ *   }
+ * }} FcmPrismaLike
+ */
+
+/**
  * Initialize Firebase Admin SDK if not already initialized
  * @returns {admin.app.App} Firebase app instance
  */
@@ -52,8 +69,15 @@ async function initializeFirebaseAdmin() {
 
 /**
  * Creates an FCM provider for sending push notifications
- * @param {Object} prisma - Prisma client instance (optional, for fetching FCM tokens)
- * @returns {Object} FCM provider with sendToUsers method
+ * @param {FcmPrismaLike | undefined} prisma - Prisma client instance (optional, for fetching FCM tokens)
+ * @returns {{
+ *   sendToUsers: (params: {
+ *     userIds: string[],
+ *     title: string,
+ *     body: string,
+ *     data: Record<string, import("../../types/index").NotificationDataValue | string>
+ *   }) => Promise<{ sent: number, failed: number, failures: Array<{ userId: string, deviceId?: string | null, error: string | undefined }> }>
+ * }} FCM provider with sendToUsers method
  */
 export function createFcmProvider(prisma) {
   return {
@@ -63,8 +87,8 @@ export function createFcmProvider(prisma) {
      * @param {string[]} params.userIds - Array of user IDs to send to
      * @param {string} params.title - Notification title
      * @param {string} params.body - Notification body
-     * @param {Object} params.data - Additional data payload
-     * @returns {Promise<Object>} Result with sent count, failed count, and failures array
+     * @param {Record<string, import("../../types/index").NotificationDataValue | string>} params.data - Additional data payload
+     * @returns {Promise<{ sent: number, failed: number, failures: Array<{ userId: string, deviceId?: string | null, error: string | undefined }> }>} Result with sent count, failed count, and failures array
      */
     async sendToUsers({ userIds, title, body, data }) {
       if (!userIds || userIds.length === 0) {
@@ -83,6 +107,7 @@ export function createFcmProvider(prisma) {
         };
 
         // Prepare data payload (FCM data must be strings)
+        /** @type {Record<string, string>} */
         const dataPayload = {};
         if (data) {
           for (const [key, value] of Object.entries(data)) {
