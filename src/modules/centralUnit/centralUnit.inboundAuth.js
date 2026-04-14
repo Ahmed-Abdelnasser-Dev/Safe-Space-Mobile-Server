@@ -1,7 +1,16 @@
 import { getEnv } from "../../config/env.js";
 import { ERROR_CODES } from "../../config/constants.js";
 
+/** @typedef {import("../../types/errors").AppError} AppError */
+
+/**
+ * @param {number} status
+ * @param {string} code
+ * @param {string} message
+ * @returns {AppError}
+ */
 function makeError(status, code, message) {
+  /** @type {AppError} */
   const err = new Error(message);
   err.statusCode = status;
   err.code = code;
@@ -9,6 +18,9 @@ function makeError(status, code, message) {
   return err;
 }
 
+/**
+ * @param {import("express").Request} req
+ */
 export function enforceCentralUnitInboundAuth(req) {
   const env = getEnv();
 

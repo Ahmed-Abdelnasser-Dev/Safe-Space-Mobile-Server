@@ -1,9 +1,48 @@
 import { randomUUID } from "node:crypto";
 
+/**
+ * @typedef {{
+ *   statusCode?: number,
+ *   code?: string,
+ *   expose?: boolean,
+ *   details?: unknown
+ * }} AppErrorFields
+ */
+
+/**
+ * @typedef {{
+ *   accidentId: string,
+ *   description: string,
+ *   latitude: number,
+ *   longitude: number,
+ *   severity: "low" | "medium" | "high",
+ *   media: import("../../types/index").AccidentMediaInput[]
+ * }} SendAccidentPayload
+ */
+
+/**
+ * @typedef {{
+ *   centralUnitReferenceId?: string,
+ *   referenceId?: string,
+ *   id?: string
+ * } & Record<string, unknown>} CentralUnitSendResponse
+ */
+
+/**
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * @param {{
+ *   baseUrl: string,
+ *   timeoutMs?: number,
+ *   fetchImpl?: typeof fetch
+ * }} deps
+ */
 export function createCentralUnitClient({
   baseUrl,
   timeoutMs = 5000,
@@ -39,6 +78,7 @@ export function createCentralUnitClient({
       const json = text ? JSON.parse(text) : null;
 
       if (!res.ok) {
+        /** @type {Error & AppErrorFields} */
         const err = new Error(`Central Unit non-2xx: ${res.status}`);
         err.statusCode = 502;
         err.code = "CENTRAL_UNIT_BAD_RESPONSE";
@@ -50,12 +90,14 @@ export function createCentralUnitClient({
       return json;
     } catch (err) {
       // Retry only on network/timeout-like errors
+      /** @type {{ name?: string, code?: string }} */
+      const knownErr = /** @type {{ name?: string, code?: string }} */ (err || {});
       const canRetry =
         retry > 0 &&
-        (err.name === "AbortError" ||
-          err.code === "ETIMEDOUT" ||
-          err.code === "ECONNRESET" ||
-          err.code === "ENOTFOUND");
+        (knownErr.name === "AbortError" ||
+          knownErr.code === "ETIMEDOUT" ||
+          knownErr.code === "ECONNRESET" ||
+          knownErr.code === "ENOTFOUND");
 
       if (canRetry) {
         await sleep(200 * (3 - retry));
@@ -74,6 +116,11 @@ export function createCentralUnitClient({
   }
 
   return {
+    /**
+     * @param {SendAccidentPayload} payload
+     * @param {{ idempotencyKey?: string }} [options]
+      * @returns {Promise<CentralUnitSendResponse>}
+     */
     async sendAccident(payload, { idempotencyKey } = {}) {
       const key = idempotencyKey || randomUUID();
       // NOTE: Central Unit endpoint path is not specified in docs; keep it configurable.

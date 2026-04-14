@@ -1,5 +1,24 @@
 import { z } from "zod";
 
+/**
+ * @typedef {{
+ *   accidentId: string,
+ *   description: string,
+ *   latitude: number,
+ *   longitude: number,
+ *   severity: "low" | "medium" | "high",
+ *   media: import("../../types/index").AccidentMediaInput[]
+ * }} SendAccidentToCentralUnitInput
+ */
+
+/**
+ * @typedef {{
+ *   centralUnitAccidentId: string,
+ *   occurredAt: string,
+ *   location: import("../../types/index").GeoLocation
+ * }} ReceiveAccidentFromCentralUnitInput
+ */
+
 export const sendAccidentSchema = z
   .object({
     accidentId: z.string().uuid(),
@@ -28,4 +47,10 @@ export const receiveAccidentSchema = z
     }),
   })
   .strict();
+
+/** @type {import("zod").ZodType<SendAccidentToCentralUnitInput>} */
+const _sendAccidentSchemaTypecheck = sendAccidentSchema;
+
+/** @type {import("zod").ZodType<ReceiveAccidentFromCentralUnitInput>} */
+const _receiveAccidentSchemaTypecheck = receiveAccidentSchema;
 

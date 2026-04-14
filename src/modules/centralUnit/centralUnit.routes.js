@@ -1,4 +1,15 @@
 import { Router } from "express";
+
+/**
+ * @typedef {{
+ *   sendAccidentToCentralUnitHandler: import("express").RequestHandler,
+ *   receiveAccidentFromCentralUnitHandler: import("express").RequestHandler
+ * }} CentralUnitController
+ */
+
+/**
+ * @param {{ centralUnitController: CentralUnitController }} deps
+ */
 export function createCentralUnitRouter({ centralUnitController }) {
   const router = Router();
   router.post("/central-unit/send-accident-to-central-unit", centralUnitController.sendAccidentToCentralUnitHandler);

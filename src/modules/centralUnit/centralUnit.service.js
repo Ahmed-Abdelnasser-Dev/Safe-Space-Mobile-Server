@@ -1,12 +1,64 @@
 import { createCentralUnitClient } from "./centralUnit.client.js";
-import { isInRange } from "../accidents/accidents.service.js";
 
 import { getEnv } from "../../config/env.js";
 import { logger } from "../../utils/logger.js";
 
+/** @typedef {import("../../types/errors").AppError} AppError */
+
+/**
+ * @typedef {{
+ *   accidentId: string,
+ *   description: string,
+ *   latitude: number,
+ *   longitude: number,
+ *   severity: "low" | "medium" | "high",
+ *   media: import("../../types/index").AccidentMediaInput[]
+ * }} SendAccidentToCentralUnitInput
+ */
+
+/**
+ * @typedef {{
+ *   centralUnitAccidentId: string,
+ *   occurredAt: string,
+ *   location: import("../../types/index").GeoLocation
+ * }} ReceiveAccidentFromCentralUnitInput
+ */
+
+/**
+ * @typedef {{
+ *   findAccidentById: (accidentId: string) => Promise<{ id: string } | null>,
+ *   markAccidentSentToCentralUnit: (accidentId: string, centralUnitReferenceId: string) => Promise<{ id: string, centralUnitReferenceId: string | null }>,
+ *   createInboundCentralUnitAccident: (input: {
+ *     centralUnitAccidentId: string,
+ *     occurredAt: Date,
+ *     lat: number,
+ *     lng: number
+ *   }) => Promise<{ id: string }>,
+ *   getActiveUsersWithFcmTokens: () => Promise<string[]>
+ * }} CentralUnitRepo
+ */
+
+/**
+ * @typedef {{
+ *   sendAccidentNotification?: (input: {
+ *     accidentId: string,
+ *     userIds: string[],
+ *     title: string,
+ *     body: string,
+ *     streetName?: string,
+ *     data?: Record<string, import("../../types/index").NotificationDataValue>
+ *   }) => Promise<{ ok: true, sent: number, failed: number }>
+ * }} NotificationsService
+ */
+
+/**
+ * @param {{
+ *   centralUnitRepo: CentralUnitRepo,
+ *   notificationsService?: NotificationsService
+ * }} deps
+ */
 export function createCentralUnitService({
   centralUnitRepo,
-  accidentsRepo,
   notificationsService,
 }) {
   const env = getEnv();
@@ -15,6 +67,10 @@ export function createCentralUnitService({
     : null;
 
   return {
+    /**
+     * @param {SendAccidentToCentralUnitInput} input
+     * @returns {Promise<{ ok: true, centralUnitReferenceId: string } | { ok: false, reason: "not_configured" }>}
+     */
     async sendAccidentToCentralUnit({
       accidentId,
       description,
@@ -34,6 +90,7 @@ export function createCentralUnitService({
       // Optionally validate the accident exists
       const existing = await centralUnitRepo.findAccidentById(accidentId);
       if (!existing) {
+        /** @type {AppError} */
         const err = new Error("Accident not found");
         err.statusCode = 404;
         err.expose = true;
@@ -65,6 +122,10 @@ export function createCentralUnitService({
       return { ok: true, centralUnitReferenceId: String(ref) };
     },
 
+    /**
+     * @param {ReceiveAccidentFromCentralUnitInput} input
+     * @returns {Promise<{ ok: true }>}
+     */
     async receiveAccidentFromCentralUnit({
       centralUnitAccidentId,
       occurredAt,
@@ -101,7 +162,6 @@ export function createCentralUnitService({
             userIds: impactedUsers,
             title: "Accident Nearby",
             body: "An accident has been reported in your area. Please stay alert.",
-            streetName: null,
             data: {
               type: "ACCIDENT",
               accidentId: created.id,
