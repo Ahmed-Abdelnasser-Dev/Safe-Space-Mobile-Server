@@ -5,6 +5,21 @@ import {
   refreshTokenRateLimiter 
 } from "../../middleware/rateLimit.middleware.js";
 
+/**
+ * @typedef {{
+ *   register: import("express").RequestHandler,
+ *   login: import("express").RequestHandler,
+ *   refresh: import("express").RequestHandler,
+ *   logout: import("express").RequestHandler,
+ *   updateFcmToken: import("express").RequestHandler,
+ *   verifyEmail: import("express").RequestHandler,
+ *   resendVerificationEmail: import("express").RequestHandler
+ * }} AuthController
+ */
+
+/**
+ * @param {{ authController: AuthController }} deps
+ */
 export function createAuthRouter({ authController }) {
   const router = Router();
   
@@ -24,15 +39,18 @@ export function createAuthRouter({ authController }) {
   return router;
 }
 
+/** @type {AuthController} */
+const unconfiguredAuthController = {
+  register: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  login: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  refresh: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  logout: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  updateFcmToken: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  verifyEmail: (req, res) => res.status(500).json({ message: "Router not wired" }),
+  resendVerificationEmail: (req, res) => res.status(500).json({ message: "Router not wired" })
+};
+
 export const authRouter = createAuthRouter({
-  authController: {
-    register: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    login: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    refresh: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    logout: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    updateFcmToken: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    verifyEmail: (req, res) => res.status(500).json({ message: "Router not wired" }),
-    resendVerificationEmail: (req, res) => res.status(500).json({ message: "Router not wired" })
-  }
+  authController: unconfiguredAuthController,
 });
 

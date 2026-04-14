@@ -1,5 +1,9 @@
 import jwt from "jsonwebtoken";
 
+/**
+ * @param {unknown} ttl
+ * @returns {number}
+ */
 export function parseTtlToMs(ttl) {
   if (typeof ttl === "number") return ttl;
   if (/^\d+$/.test(String(ttl))) return Number(ttl);
@@ -21,6 +25,16 @@ export function parseTtlToMs(ttl) {
   return value * multiplier;
 }
 
+/**
+ * @param {{
+ *   accessSecret: string,
+ *   refreshSecret: string,
+ *   accessTtl: string | number,
+ *   refreshTtl: string | number,
+ *   issuer?: string,
+ *   audience?: string
+ * }} input
+ */
 export function createAuthTokenService({
   accessSecret,
   refreshSecret,
@@ -36,18 +50,27 @@ export function createAuthTokenService({
     throw new Error("Invalid JWT TTL configuration");
   }
 
+  /** @type {import("jsonwebtoken").SignOptions} */
   const signOptions = {};
   if (issuer) signOptions.issuer = issuer;
   if (audience) signOptions.audience = audience;
 
   const strictRefreshTokenUse = process.env.STRICT_REFRESH_TOKEN_USE === "true";
 
+  /**
+   * @param {unknown} role
+   * @returns {{ role?: string }}
+   */
   function buildRoleClaim(role) {
     if (typeof role !== "string") return {};
     const normalized = role.trim().toUpperCase();
     return normalized ? { role: normalized } : {};
   }
 
+  /**
+   * @param {{ userId: string, role?: string }} input
+   * @returns {string}
+   */
   function signAccessToken({ userId, role }) {
     return jwt.sign(
       { sub: userId, tokenUse: "access", ...buildRoleClaim(role) },
@@ -56,6 +79,10 @@ export function createAuthTokenService({
     );
   }
 
+  /**
+   * @param {{ userId: string, sessionId: string, role?: string }} input
+   * @returns {string}
+   */
   function signRefreshToken({ userId, sessionId, role }) {
     return jwt.sign(
       {
@@ -69,7 +96,12 @@ export function createAuthTokenService({
     );
   }
 
+  /**
+   * @param {string} token
+   * @returns {import("jsonwebtoken").JwtPayload | string}
+   */
   function verifyRefreshToken(token) {
+    /** @type {import("jsonwebtoken").VerifyOptions} */
     const verifyOptions = {
       algorithms: ["HS256"],
     };

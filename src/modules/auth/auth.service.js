@@ -14,6 +14,50 @@ import {
 } from "./application/auth.token-service.js";
 import { createAuthSecurityPolicy } from "./application/auth.security-policy.js";
 
+/**
+ * @typedef {{
+ *   createUser: (input: { email: string, passwordHash: string, fullName: string, phone?: string }) => Promise<{ id: string, email: string, fullName: string, role: string }>,
+ *   findUserByEmail: (email: string) => Promise<any>,
+ *   findUserById: (userId: string) => Promise<any>,
+ *   createSession: (input: { userId: string, deviceId?: string | null, fcmToken?: string | null, refreshTokenHash: string, expiresAt: Date }) => Promise<{ id: string, userId: string, expiresAt: Date }>,
+ *   updateSessionRefreshHash: (sessionId: string, refreshTokenHash: string) => Promise<any>,
+ *   updateSessionFcmToken: (sessionId: string, fcmToken: string) => Promise<{ fcmToken: string | null }>,
+ *   findSessionById: (sessionId: string) => Promise<any>,
+ *   revokeSession: (sessionId: string) => Promise<any>,
+ *   revokeAllUserSessions: (userId: string) => Promise<any>,
+ *   recordLoginAttempt: (input: { userId?: string | null, email: string, ipAddress: string, userAgent?: string | null, successful: boolean }) => Promise<any>,
+ *   getRecentFailedLoginAttempts: (email: string, sinceDate: Date) => Promise<number>,
+ *   lockUserAccount: (userId: string, lockUntil: Date) => Promise<any>,
+ *   unlockUserAccount: (userId: string) => Promise<any>,
+ *   createEmailVerificationToken: (userId: string, token: string, expiresAt: Date) => Promise<any>,
+ *   findUserByVerificationToken: (token: string) => Promise<any>,
+ *   markEmailAsVerified: (userId: string) => Promise<any>
+ * }} AuthRepo
+ */
+
+/**
+ * @typedef {{
+ *   signAccessToken: (input: { userId: string, role?: string }) => string,
+ *   signRefreshToken: (input: { userId: string, sessionId: string, role?: string }) => string,
+ *   verifyRefreshToken: (token: string) => import("jsonwebtoken").JwtPayload | string
+ * }} AuthTokenService
+ */
+
+/**
+ * @typedef {{
+ *   maxFailedAttempts: number,
+ *   accountLockDurationMs: number,
+ *   loginAttemptWindowMs: number,
+ *   isAccountLocked: (accountLockedUntil: Date | string | null | undefined) => boolean,
+ *   getLockRemainingMinutes: (accountLockedUntil: Date | string) => number,
+ *   computeLockUntil: () => Date,
+ *   computeAttemptWindowStart: () => Date
+ * }} AuthSecurityPolicy
+ */
+
+/**
+ * @param {{ authRepo: AuthRepo, tokenService?: AuthTokenService, securityPolicy?: AuthSecurityPolicy }} deps
+ */
 export function createAuthService({ authRepo, tokenService, securityPolicy }) {
   const env = getEnv();
   const accessSecret = env.JWT_ACCESS_SECRET;
@@ -46,6 +90,9 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
   const authSecurityPolicy = securityPolicy || createAuthSecurityPolicy();
 
   return {
+    /**
+     * @param {{ email: string, password: string, fullName: string, phone?: string }} input
+     */
     async register({ email, password, fullName, phone }) {
       const existing = await authRepo.findUserByEmail(email);
       if (existing) {
@@ -98,6 +145,9 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       return response;
     },
 
+    /**
+     * @param {{ email: string, password: string, deviceId?: string, fcmToken?: string, ipAddress?: string, userAgent?: string }} input
+     */
     async login({ email, password, deviceId, fcmToken, ipAddress, userAgent }) {
       const user = await authRepo.findUserByEmail(email);
       
@@ -198,6 +248,7 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       };
     },
 
+    /** @param {{ refreshToken: string }} input */
     async refresh({ refreshToken }) {
       let payload;
       try {
@@ -263,6 +314,7 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       return { accessToken, refreshToken: newRefreshToken };
     },
 
+    /** @param {{ refreshToken: string }} input */
     async logout({ refreshToken }) {
       let payload;
       try {
@@ -281,6 +333,7 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       return { ok: true };
     },
 
+    /** @param {{ sessionId: string, fcmToken: string }} input */
     async updateFcmToken({ sessionId, fcmToken }) {
       const session = await authRepo.findSessionById(sessionId);
       if (!session) {
@@ -295,6 +348,7 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       return { ok: true, fcmToken: updated.fcmToken };
     },
 
+    /** @param {{ token: string }} input */
     async verifyEmail({ token }) {
       const user = await authRepo.findUserByVerificationToken(token);
       
@@ -323,6 +377,7 @@ export function createAuthService({ authRepo, tokenService, securityPolicy }) {
       };
     },
 
+    /** @param {{ email: string }} input */
     async resendVerificationEmail({ email }) {
       const user = await authRepo.findUserByEmail(email);
       

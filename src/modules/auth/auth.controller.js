@@ -8,8 +8,24 @@ import {
   resendVerificationSchema 
 } from "./auth.validators.js";
 
+/**
+ * @typedef {{
+ *   register: (input: { email: string, password: string, fullName: string, phone?: string }) => Promise<unknown>,
+ *   login: (input: { email: string, password: string, deviceId?: string, fcmToken?: string, ipAddress: string, userAgent: string }) => Promise<unknown>,
+ *   refresh: (input: { refreshToken: string }) => Promise<unknown>,
+ *   logout: (input: { refreshToken: string }) => Promise<unknown>,
+ *   updateFcmToken: (input: { sessionId: string, fcmToken: string }) => Promise<unknown>,
+ *   verifyEmail: (input: { token: string }) => Promise<unknown>,
+ *   resendVerificationEmail: (input: { email: string }) => Promise<unknown>
+ * }} AuthService
+ */
+
+/**
+ * @param {{ authService: AuthService }} deps
+ */
 export function createAuthController({ authService }) {
   return {
+    /** @type {import("express").RequestHandler} */
     register: async (req, res, next) => {
       try {
         const body = registerSchema.parse(req.body);
@@ -20,6 +36,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     login: async (req, res, next) => {
       try {
         const body = loginSchema.parse(req.body);
@@ -37,6 +54,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     refresh: async (req, res, next) => {
       try {
         const body = refreshSchema.parse(req.body);
@@ -47,6 +65,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     logout: async (req, res, next) => {
       try {
         const body = logoutSchema.parse(req.body);
@@ -57,6 +76,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     updateFcmToken: async (req, res, next) => {
       try {
         const body = updateFcmTokenSchema.parse(req.body);
@@ -67,6 +87,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     verifyEmail: async (req, res, next) => {
       try {
         const body = verifyEmailSchema.parse(req.body);
@@ -77,6 +98,7 @@ export function createAuthController({ authService }) {
       }
     },
 
+    /** @type {import("express").RequestHandler} */
     resendVerificationEmail: async (req, res, next) => {
       try {
         const body = resendVerificationSchema.parse(req.body);
