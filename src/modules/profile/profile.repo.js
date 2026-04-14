@@ -1,3 +1,5 @@
+/** @typedef {import("@prisma/client").PrismaClient} PrismaClient */
+
 /**
  * Profile repository - handles database operations for user profile data
  * @param {PrismaClient} prisma - Prisma client instance
@@ -49,6 +51,7 @@ export function createProfileRepo(prisma) {
   return {
     /**
      * Get user's medical information
+     * @param {string} userId
      */
     async getMedicalInfo(userId) {
       return prisma.user.findUnique({
@@ -71,6 +74,8 @@ export function createProfileRepo(prisma) {
 
     /**
      * Update user's medical information
+      * @param {string} userId
+      * @param {import("../../types/index").UpdateMedicalInfoInput} data
      */
     async updateMedicalInfo(userId, data) {
       return prisma.user.update({
@@ -97,6 +102,7 @@ export function createProfileRepo(prisma) {
 
     /**
      * Get user's identification data
+      * @param {string} userId
      */
     async getIdentification(userId) {
       return prisma.user.findUnique({
@@ -119,6 +125,8 @@ export function createProfileRepo(prisma) {
 
     /**
      * Update user's identification data
+      * @param {string} userId
+      * @param {import("../../types/index").UpdateIdentificationInput} data
      */
     async updateIdentification(userId, data) {
       return prisma.user.update({
@@ -142,6 +150,7 @@ export function createProfileRepo(prisma) {
 
     /**
      * Get user's personal information
+      * @param {string} userId
      */
     async getPersonalInfo(userId) {
       return prisma.user.findUnique({
@@ -161,6 +170,8 @@ export function createProfileRepo(prisma) {
 
     /**
      * Update user's personal information
+      * @param {string} userId
+      * @param {import("../../types/index").UpdatePersonalInfoInput} data
      */
     async updatePersonalInfo(userId, data) {
       return prisma.user.update({
@@ -181,6 +192,7 @@ export function createProfileRepo(prisma) {
 
     /**
      * Get complete user profile (all safe fields)
+      * @param {string} userId
      */
     async getProfile(userId) {
       return prisma.user.findUnique({

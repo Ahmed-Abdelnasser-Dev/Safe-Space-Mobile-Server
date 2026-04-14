@@ -5,13 +5,27 @@ import {
 } from "./profile.validators.js";
 
 /**
+ * @typedef {{
+ *   getProfile: (userId: string) => Promise<unknown>,
+ *   getMedicalInfo: (userId: string) => Promise<unknown>,
+ *   updateMedicalInfo: (userId: string, data: unknown) => Promise<unknown>,
+ *   getIdentification: (userId: string) => Promise<unknown>,
+ *   updateIdentification: (userId: string, data: unknown) => Promise<unknown>,
+ *   getPersonalInfo: (userId: string) => Promise<unknown>,
+ *   updatePersonalInfo: (userId: string, data: unknown) => Promise<unknown>
+ * }} ProfileService
+ */
+
+/**
  * Profile controller - handles HTTP requests/responses for profile operations
+ * @param {{ profileService: ProfileService }} deps
  */
 export function createProfileController({ profileService }) {
   return {
     /**
      * GET /me/profile - Get complete user profile
      */
+    /** @type {import("express").RequestHandler} */
     getProfile: async (req, res, next) => {
       try {
         const userId = req.userId; // Set by requireAuth middleware
@@ -25,6 +39,7 @@ export function createProfileController({ profileService }) {
     /**
      * GET /me/medical-info - Get medical information
      */
+    /** @type {import("express").RequestHandler} */
     getMedicalInfo: async (req, res, next) => {
       try {
         const userId = req.userId;
@@ -38,6 +53,7 @@ export function createProfileController({ profileService }) {
     /**
      * PUT /me/medical-info - Update medical information
      */
+    /** @type {import("express").RequestHandler} */
     updateMedicalInfo: async (req, res, next) => {
       try {
         const userId = req.userId;
@@ -52,6 +68,7 @@ export function createProfileController({ profileService }) {
     /**
      * GET /me/identification - Get identification data
      */
+    /** @type {import("express").RequestHandler} */
     getIdentification: async (req, res, next) => {
       try {
         const userId = req.userId;
@@ -65,6 +82,7 @@ export function createProfileController({ profileService }) {
     /**
      * PUT /me/identification - Update identification data
      */
+    /** @type {import("express").RequestHandler} */
     updateIdentification: async (req, res, next) => {
       try {
         const userId = req.userId;
@@ -79,6 +97,7 @@ export function createProfileController({ profileService }) {
     /**
      * GET /me/personal-info - Get personal information
      */
+    /** @type {import("express").RequestHandler} */
     getPersonalInfo: async (req, res, next) => {
       try {
         const userId = req.userId;
@@ -92,6 +111,7 @@ export function createProfileController({ profileService }) {
     /**
      * PATCH /me/personal-info - Update personal information
      */
+    /** @type {import("express").RequestHandler} */
     updatePersonalInfo: async (req, res, next) => {
       try {
         const userId = req.userId;
