@@ -1,8 +1,28 @@
 import { reportAccidentSchema } from "./accidents.validators.js";
 import { parseAccidentReportRequest } from "./application/accident.request-parser.js";
 
+/**
+ * @typedef {{
+ *   reporterUserId: string | null,
+ *   location: import("../../types/index").GeoLocation,
+ *   message?: string,
+ *   occurredAt: string,
+ *   media: import("../../types/index").AccidentMediaInput[]
+ * }} ReportAccidentCommand
+ */
+
+/**
+ * @typedef {{
+ *   reportAccident: (input: ReportAccidentCommand) => Promise<{ accidentId: string, status: string }>
+ * }} AccidentsService
+ */
+
+/**
+ * @param {{ accidentsService: AccidentsService }} deps
+ */
 export function createAccidentsController({ accidentsService }) {
   return {
+    /** @type {import("express").RequestHandler} */
     reportAccidentHandler: async (req, res, next) => {
       try {
         const bodyData = parseAccidentReportRequest({

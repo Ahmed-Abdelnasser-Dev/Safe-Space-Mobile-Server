@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+/** @typedef {import("../../types/index").ReportAccidentInput} ReportAccidentInput */
+
 const locationSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
@@ -20,3 +22,6 @@ export const reportAccidentSchema = z.object({
   occurredAt: z.string().datetime(),
   media: mediaSchema.optional(),
 });
+
+/** @type {import("zod").ZodType<ReportAccidentInput>} */
+const _reportAccidentSchemaTypecheck = reportAccidentSchema;

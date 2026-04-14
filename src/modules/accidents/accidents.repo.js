@@ -1,5 +1,42 @@
+/**
+ * @typedef {{
+ *   reporterUserId: string | null,
+ *   source: import("@prisma/client").AccidentSource,
+ *   occurredAt: Date,
+ *   lat: number,
+ *   lng: number,
+ *   message: string | null,
+ *   description: string | null,
+ *   severity: string,
+ *   status?: string,
+ *   media?: import("../../types/index").AccidentMediaInput[]
+ * }} AccidentCreateInput
+ */
+
+/**
+ * @typedef {{
+ *   accident: {
+ *     create: (input: { data: unknown, select: { id: true } }) => Promise<{ id: string }>
+ *   },
+ *   session: {
+ *     findMany: (input: {
+ *       where: unknown,
+ *       distinct: ["userId"],
+ *       select: { userId: true }
+ *     }) => Promise<Array<{ userId: string }>>
+ *   }
+ * }} AccidentsPrismaLike
+ */
+
+/**
+ * @param {AccidentsPrismaLike} prisma
+ */
 export function createAccidentsRepo(prisma) {
   return {
+    /**
+     * @param {AccidentCreateInput} data
+     * @returns {Promise<{ id: string }>}
+     */
     async createAccident(data) {
       return prisma.accident.create({
         data: {
@@ -22,6 +59,10 @@ export function createAccidentsRepo(prisma) {
       });
     },
 
+    /**
+     * @param {string | null} [excludeUserId]
+     * @returns {Promise<string[]>}
+     */
     async getActiveUsersWithFcmTokens(excludeUserId = null) {
       /**
        * Get all users who have active sessions with valid FCM tokens

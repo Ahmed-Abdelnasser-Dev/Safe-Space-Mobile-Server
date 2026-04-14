@@ -1,8 +1,76 @@
 import { AccidentSource } from "@prisma/client";
 import { logger } from "../../utils/logger.js";
 
+/**
+ * @typedef {import("../../types/index").GeoLocation} GeoLocation
+ */
+
+/**
+ * @typedef {{
+ *   reporterUserId: string | null,
+ *   source: import("@prisma/client").AccidentSource,
+ *   occurredAt: Date,
+ *   lat: number,
+ *   lng: number,
+ *   message: string | null,
+ *   description: string | null,
+ *   severity: string,
+ *   media: import("../../types/index").AccidentMediaInput[],
+ *   status: string
+ * }} AccidentCreateInput
+ */
+
+/**
+ * @typedef {{
+ *   createAccident: (input: AccidentCreateInput) => Promise<{ id: string }>,
+ *   getActiveUsersWithFcmTokens: (excludeUserId?: string | null) => Promise<string[]>
+ * }} AccidentsRepo
+ */
+
+/**
+ * @typedef {{
+ *   sendAccidentToCentralUnit?: (input: {
+ *     accidentId: string,
+ *     description: string,
+ *     latitude: number,
+ *     longitude: number,
+ *     severity: string,
+ *     media: import("../../types/index").AccidentMediaInput[]
+ *   }) => Promise<unknown>
+ * }} CentralUnitService
+ */
+
+/**
+ * @typedef {{
+ *   sendAccidentNotification?: (input: {
+ *     accidentId: string,
+ *     userIds: string[],
+ *     title: string,
+ *     body: string,
+ *     streetName?: string | null,
+ *     data?: Record<string, import("../../types/index").NotificationDataValue>
+ *   }) => Promise<unknown>
+ * }} NotificationsService
+ */
+
+/**
+ * @typedef {{
+ *   reporterUserId: string | null,
+ *   location: GeoLocation,
+ *   message?: string,
+ *   occurredAt: string,
+ *   media?: import("../../types/index").AccidentMediaInput[]
+ * }} ReportAccidentCommand
+ */
+
+/**
+ * @param {GeoLocation} a
+ * @param {GeoLocation} b
+ * @returns {number}
+ */
 export function haversineMeters(a, b) {
   const R = 6371000;
+  /** @param {number} deg */
   const toRad = (deg) => (deg * Math.PI) / 180;
 
   const lat1 = toRad(a.lat);
@@ -20,12 +88,29 @@ export function haversineMeters(a, b) {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+/**
+ * @param {GeoLocation} a
+ * @param {GeoLocation} b
+ * @param {number} radiusMeters
+ * @returns {boolean}
+ */
 export function isInRange(a, b, radiusMeters) {
   return haversineMeters(a, b) <= radiusMeters;
 }
 
+/**
+ * @param {{
+ *   accidentsRepo: AccidentsRepo,
+ *   centralUnitService?: CentralUnitService,
+ *   notificationsService?: NotificationsService
+ * }} deps
+ */
 export function createAccidentsService({ accidentsRepo, centralUnitService, notificationsService }) {
   return {
+    /**
+     * @param {ReportAccidentCommand} input
+     * @returns {Promise<{ accidentId: string, status: "received" }>}
+     */
     async reportAccident({ reporterUserId, location, message, occurredAt, media }) {
       const created = await accidentsRepo.createAccident({
         reporterUserId,
