@@ -1,3 +1,9 @@
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ * @returns {void}
+ */
 export function requestLoggerMiddleware(req, res, next) {
   if (process.env.NODE_ENV === "production") {
     return next();
@@ -8,6 +14,7 @@ export function requestLoggerMiddleware(req, res, next) {
 
   let responseBodyPreview = null;
 
+  /** @type {import("express").Response["json"]} */
   res.json = (body) => {
     try {
       // Keep a small, safe preview for logging (truncate large bodies)

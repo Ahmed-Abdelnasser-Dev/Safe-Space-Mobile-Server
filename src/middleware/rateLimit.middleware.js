@@ -1,6 +1,7 @@
 import rateLimit from "express-rate-limit";
 
 // Skip rate limiting in test environment
+/** @returns {boolean} */
 const skipInTest = () => process.env.NODE_ENV === "test";
 
 /**
@@ -9,7 +10,7 @@ const skipInTest = () => process.env.NODE_ENV === "test";
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-    skip: skipInTest,
+  skip: skipInTest,
   limit: 5, // 5 attempts per 15 minutes
   message: {
     error: "Too many authentication attempts. Please try again later.",
@@ -38,7 +39,7 @@ export const passwordResetRateLimiter = rateLimit({
  * Lenient rate limiter for token refresh
  */
 export const refreshTokenRateLimiter = rateLimit({
-    skip: skipInTest,
+  skip: skipInTest,
   windowMs: 15 * 60 * 1000, // 15 minutes
   limit: 20, // 20 refreshes per 15 minutes
   message: {
@@ -53,8 +54,7 @@ export const refreshTokenRateLimiter = rateLimit({
  * Email verification rate limiter
  */
 export const emailVerificationRateLimiter = rateLimit({
-    skip: skipInTest,
-    skip: skipInTest,
+  skip: skipInTest,
   windowMs: 60 * 60 * 1000, // 1 hour
   limit: 5, // 5 verification emails per hour
   message: {

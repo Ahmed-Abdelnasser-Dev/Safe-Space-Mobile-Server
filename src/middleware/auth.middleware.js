@@ -6,7 +6,17 @@ import {
   normalizeJwtSubject,
 } from "../shared/security/auth-token.js";
 
+/** @typedef {import("express").Request} Request */
+/** @typedef {import("express").Response} Response */
+/** @typedef {import("express").NextFunction} NextFunction */
+/** @typedef {import("../types/errors").AppError} AppError */
+
+/**
+ * @param {ReturnType<typeof getEnv>} env
+ * @returns {import("jsonwebtoken").VerifyOptions}
+ */
 function buildAccessVerifyOptions(env) {
+  /** @type {import("jsonwebtoken").VerifyOptions} */
   const verifyOptions = {
     algorithms: ["HS256"],
   };
@@ -21,10 +31,15 @@ function buildAccessVerifyOptions(env) {
   return verifyOptions;
 }
 
+/**
+ * @param {string} token
+ * @returns {{ userId: string, userRole: string | null }}
+ */
 function decodeAccessTokenOrThrow(token) {
   const env = getEnv();
 
   if (!env.JWT_ACCESS_SECRET) {
+    /** @type {AppError} */
     const err = new Error("JWT_ACCESS_SECRET not configured");
     err.statusCode = 500;
     err.code = "INTERNAL_ERROR";
@@ -39,6 +54,7 @@ function decodeAccessTokenOrThrow(token) {
   );
 
   if (payload?.tokenUse !== "access") {
+    /** @type {AppError} */
     const err = new Error("Invalid access token");
     err.statusCode = 401;
     err.code = "UNAUTHORIZED";
@@ -49,6 +65,7 @@ function decodeAccessTokenOrThrow(token) {
   const userId = normalizeJwtSubject(payload?.sub);
 
   if (!userId) {
+    /** @type {AppError} */
     const err = new Error("Invalid access token");
     err.statusCode = 401;
     err.code = "UNAUTHORIZED";
@@ -64,6 +81,10 @@ function decodeAccessTokenOrThrow(token) {
   };
 }
 
+/**
+ * @param {AppError} err
+ * @returns {AppError}
+ */
 function mapJwtError(err) {
   if (err?.name === "JsonWebTokenError") {
     err.statusCode = 401;
@@ -94,6 +115,7 @@ export function requireAuth(req, res, next) {
     const token = extractBearerToken(authHeader);
 
     if (!token) {
+      /** @type {AppError} */
       const err = new Error("Missing or invalid authorization header");
       err.statusCode = 401;
       err.code = "UNAUTHORIZED";
@@ -111,10 +133,16 @@ export function requireAuth(req, res, next) {
 
     next();
   } catch (err) {
-    next(mapJwtError(err));
+    next(mapJwtError(/** @type {AppError} */ (err)));
   }
 }
 
+/**
+ * @param {Request} req
+ * @param {Response} res
+ * @param {NextFunction} next
+ * @returns {void}
+ */
 export function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
@@ -125,6 +153,7 @@ export function optionalAuth(req, res, next) {
     const token = extractBearerToken(authHeader);
 
     if (!token) {
+      /** @type {AppError} */
       const err = new Error("Missing or invalid authorization header");
       err.statusCode = 401;
       err.code = "UNAUTHORIZED";
@@ -141,6 +170,6 @@ export function optionalAuth(req, res, next) {
     next();
   } catch (err) {
     // Missing auth remains optional, but invalid provided credentials are rejected.
-    next(mapJwtError(err));
+    next(mapJwtError(/** @type {AppError} */ (err)));
   }
 }
