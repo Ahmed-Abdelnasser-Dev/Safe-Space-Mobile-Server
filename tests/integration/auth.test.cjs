@@ -12,6 +12,7 @@ const createTestUser = () => ({
   email: "test@example.com",
   passwordHash: PASSWORD_HASH,
   fullName: "Test User",
+  role: "USER",
   emailVerified: false,
   accountLockedUntil: null,
   emailVerificationToken: null,
@@ -29,6 +30,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -43,6 +45,11 @@ describe("Auth Module - Comprehensive Security Tests", () => {
         findUserByVerificationToken: jest.fn(),
         markEmailAsVerified: jest.fn(),
       };
+
+      mockAuthRepo.findUserById.mockResolvedValue({
+        id: testUser.id,
+        role: testUser.role,
+      });
 
       const { createApp } = await import("../../src/app.js");
       const { createAuthService } = await import("../../src/modules/auth/auth.service.js");
@@ -83,7 +90,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       expect(res.body).toHaveProperty("user");
       expect(res.body).toHaveProperty("accessToken");
       expect(res.body).toHaveProperty("refreshToken");
-      expect(res.body).toHaveProperty("emailVerificationToken"); // TEMP field
+      expect(res.body).not.toHaveProperty("emailVerificationToken");
       expect(res.body.message).toContain("verify");
       expect(mockAuthRepo.createUser).toHaveBeenCalled();
       expect(mockAuthRepo.createEmailVerificationToken).toHaveBeenCalled();
@@ -169,6 +176,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -183,6 +191,11 @@ describe("Auth Module - Comprehensive Security Tests", () => {
         findUserByVerificationToken: jest.fn(),
         markEmailAsVerified: jest.fn(),
       };
+
+      mockAuthRepo.findUserById.mockResolvedValue({
+        id: testUser.id,
+        role: testUser.role,
+      });
 
       const { createApp } = await import("../../src/app.js");
       const { createAuthService } = await import("../../src/modules/auth/auth.service.js");
@@ -371,6 +384,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -385,6 +399,11 @@ describe("Auth Module - Comprehensive Security Tests", () => {
         findUserByVerificationToken: jest.fn(),
         markEmailAsVerified: jest.fn(),
       };
+
+      mockAuthRepo.findUserById.mockResolvedValue({
+        id: testUser.id,
+        role: testUser.role,
+      });
 
       const { createApp } = await import("../../src/app.js");
       const { createAuthService } = await import("../../src/modules/auth/auth.service.js");
@@ -427,7 +446,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       const { getEnv } = await import("../../src/config/env.js");
       const env = getEnv();
       const refreshToken = jwt.sign(
-        { sub: testUser.id, sid: "session-id" },
+        { sub: testUser.id, sid: "session-id", tokenUse: "refresh" },
         env.JWT_REFRESH_SECRET,
         { expiresIn: "30d" }
       );
@@ -455,7 +474,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       const { sha256Hex } = await import("../../src/utils/crypto.js");
       const env = getEnv();
       const refreshToken = jwt.sign(
-        { sub: testUser.id, sid: "session-id" },
+        { sub: testUser.id, sid: "session-id", tokenUse: "refresh" },
         env.JWT_REFRESH_SECRET,
         { expiresIn: "30d" }
       );
@@ -497,7 +516,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       const { getEnv } = await import("../../src/config/env.js");
       const env = getEnv();
       const refreshToken = jwt.sign(
-        { sub: testUser.id, sid: "session-id" },
+        { sub: testUser.id, sid: "session-id", tokenUse: "refresh" },
         env.JWT_REFRESH_SECRET,
         { expiresIn: "30d" }
       );
@@ -529,6 +548,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -564,7 +584,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       const { getEnv } = await import("../../src/config/env.js");
       const env = getEnv();
       const refreshToken = jwt.sign(
-        { sub: testUser.id, sid: "session-id" },
+        { sub: testUser.id, sid: "session-id", tokenUse: "refresh" },
         env.JWT_REFRESH_SECRET,
         { expiresIn: "30d" }
       );
@@ -599,6 +619,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -712,6 +733,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -756,6 +778,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
       expect(res.status).toBe(200);
       expect(res.body.ok).toBe(true);
       expect(res.body.message).toContain("sent");
+      expect(res.body).not.toHaveProperty("emailVerificationToken");
       expect(mockAuthRepo.createEmailVerificationToken).toHaveBeenCalled();
     });
 
@@ -830,6 +853,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),
@@ -940,6 +964,7 @@ describe("Auth Module - Comprehensive Security Tests", () => {
 
       mockAuthRepo = {
         findUserByEmail: jest.fn(),
+        findUserById: jest.fn(),
         createUser: jest.fn(),
         createSession: jest.fn(),
         updateSessionRefreshHash: jest.fn(),

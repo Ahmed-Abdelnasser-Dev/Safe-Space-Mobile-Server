@@ -1,4 +1,10 @@
 import { createEmergencyRequestSchema, getEmergencyRequestSchema, listEmergencyRequestsSchema } from "./emergency.validators.js";
+import { parseEmergencyCreateRequest } from "./application/emergency.request-parser.js";
+import {
+  buildEmergencyListOptions,
+  canManageEmergencyRequestStatus,
+} from "./application/emergency.access-policy.js";
+import { EMERGENCY_REQUEST_STATUSES } from "./domain/emergency.constants.js";
 
 /**
  * Emergency Controller
@@ -19,53 +25,19 @@ export function createEmergencyController({ emergencyService }) {
      */
     createEmergencyRequestHandler: async (req, res, next) => {
       try {
-        // Handle multipart/form-data parsing quirks for location
-        let rawLocation = req.body.location;
-        if (typeof rawLocation === "string") {
-          try {
-            rawLocation = JSON.parse(rawLocation);
-          } catch (e) {
-            // Validator will catch invalid format
-          }
-        }
+        const bodyData = parseEmergencyCreateRequest({
+          body: req.body,
+          file: req.file,
+        });
 
-        // Handle photo upload if present
-        let photoUri = null;
-        if (req.file) {
-          photoUri = `/uploads/${req.file.filename}`;
-        } else if (req.body.photoUri) {
-          photoUri = req.body.photoUri;
-        }
-
-        // Parse emergencyTypes and emergencyServices if they're strings
-        let emergencyTypes = req.body.emergencyTypes;
-        if (typeof emergencyTypes === "string") {
-          try {
-            emergencyTypes = JSON.parse(emergencyTypes);
-          } catch (e) {
-            // Validator will catch invalid format
-          }
-        }
-
-        let emergencyServices = req.body.emergencyServices;
-        if (typeof emergencyServices === "string") {
-          try {
-            emergencyServices = JSON.parse(emergencyServices);
-          } catch (e) {
-            // Validator will catch invalid format
-          }
-        }
-
-        const bodyData = {
-          emergencyTypes,
-          emergencyServices,
-          description: req.body.description,
-          location: rawLocation,
-          timestamp: req.body.timestamp,
-        };
-
-        // Validate request body
-        const body = createEmergencyRequestSchema.parse(bodyData);
+        // Validate only schema-owned fields; attachments stay outside payload schema.
+        const body = createEmergencyRequestSchema.parse({
+          emergencyTypes: bodyData.emergencyTypes,
+          emergencyServices: bodyData.emergencyServices,
+          description: bodyData.description,
+          location: bodyData.location,
+          timestamp: bodyData.timestamp,
+        });
 
         // Get authenticated user ID if available
         const requesterUserId = req.userId || null;
@@ -76,7 +48,7 @@ export function createEmergencyController({ emergencyService }) {
           emergencyTypes: body.emergencyTypes,
           emergencyServices: body.emergencyServices,
           description: body.description,
-          photoUri,
+          photoUri: bodyData.photoUri,
           location: body.location,
           timestamp: body.timestamp,
         });
@@ -137,17 +109,25 @@ export function createEmergencyController({ emergencyService }) {
           offset: req.query.offset ? parseInt(req.query.offset, 10) : undefined,
         });
 
-        // If user is authenticated and not admin, filter by their user ID
-        const userId = req.userId || null;
-        const isAdmin = req.userRole === "ADMIN";
+        const listPolicy = buildEmergencyListOptions({
+          query,
+          userId: req.userId || null,
+          userRole: req.userRole,
+        });
 
-        const options = {
-          ...query,
-          // Only filter by userId if not admin
-          userId: !isAdmin ? userId : undefined,
-        };
+        if (listPolicy.denied) {
+          return res.status(200).json({
+            success: true,
+            data: [],
+            meta: {
+              total: 0,
+              limit: query?.limit || 20,
+              offset: query?.offset || 0,
+            },
+          });
+        }
 
-        const result = await emergencyService.listEmergencyRequests(options);
+        const result = await emergencyService.listEmergencyRequests(listPolicy.options);
 
         res.status(200).json({
           success: true,
@@ -177,10 +157,17 @@ export function createEmergencyController({ emergencyService }) {
         const params = getEmergencyRequestSchema.parse({ id: req.params.id });
         const { status } = req.body;
 
-        if (!["QUEUED", "SENT", "FAILED"].includes(status)) {
+        if (!canManageEmergencyRequestStatus(req.userRole)) {
+          return res.status(403).json({
+            success: false,
+            message: "Forbidden",
+          });
+        }
+
+        if (!status) {
           return res.status(400).json({
             success: false,
-            message: "Invalid status. Must be one of: QUEUED, SENT, FAILED",
+            message: `Invalid status. Must be one of: ${EMERGENCY_REQUEST_STATUSES.join(", ")}`,
           });
         }
 

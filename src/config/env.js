@@ -17,6 +17,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().optional(),
   JWT_ACCESS_TTL: z.string().default("15m"),
   JWT_REFRESH_TTL: z.string().default("30d"),
+  JWT_ISSUER: z.string().optional(),
+  JWT_AUDIENCE: z.string().optional(),
 
   // Firebase Cloud Messaging
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),

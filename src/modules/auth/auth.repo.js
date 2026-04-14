@@ -3,12 +3,22 @@ export function createAuthRepo(prisma) {
     async createUser({ email, passwordHash, fullName, phone }) {
       return prisma.user.create({
         data: { email, passwordHash, fullName, phone: phone || null },
-        select: { id: true, email: true, fullName: true },
+        select: { id: true, email: true, fullName: true, role: true },
       });
     },
 
     async findUserByEmail(email) {
       return prisma.user.findUnique({ where: { email } });
+    },
+
+    async findUserById(userId) {
+      return prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
     },
 
     async createSession({ userId, deviceId, fcmToken, refreshTokenHash, expiresAt }) {

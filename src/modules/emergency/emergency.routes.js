@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../../middleware/upload.js";
-import { requireAuth } from "../../middleware/auth.middleware.js";
+import { optionalAuth, requireAuth } from "../../middleware/auth.middleware.js";
 
 /**
  * Create Emergency Router
@@ -59,6 +59,7 @@ export function createEmergencyRouter({ emergencyController }) {
    */
   router.get(
     "/emergency/requests",
+    optionalAuth,
     emergencyController.listEmergencyRequestsHandler
   );
 

@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { upload } from "../../middleware/upload.js";
+import { optionalAuth } from "../../middleware/auth.middleware.js";
 
 export function createAccidentsRouter({ accidentsController }) {
   const router = Router();
   router.post(
     "/accident/report-accident",
+    optionalAuth,
     upload.array("media"),
     accidentsController.reportAccidentHandler,
   );

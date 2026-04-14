@@ -1,4 +1,8 @@
 import { logger } from "../../utils/logger.js";
+import {
+  EMERGENCY_REQUEST_STATUSES,
+  isEmergencyRequestStatus,
+} from "./domain/emergency.constants.js";
 
 /**
  * Emergency Service
@@ -140,8 +144,12 @@ export function createEmergencyService({ emergencyRepo, notificationsService, ce
       logger.info("Listing emergency requests", options);
 
       const requests = await emergencyRepo.listEmergencyRequests(options);
+      const countFilters = {
+        ...(options.status ? { status: options.status } : {}),
+        ...(options.userId ? { requesterUserId: options.userId } : {}),
+      };
       const total = await emergencyRepo.countEmergencyRequests(
-        options.status ? { status: options.status } : {}
+        countFilters
       );
 
       return {
@@ -164,6 +172,15 @@ export function createEmergencyService({ emergencyRepo, notificationsService, ce
         emergencyRequestId,
         status,
       });
+
+      if (!isEmergencyRequestStatus(status)) {
+        const error = new Error(
+          `Invalid status. Must be one of: ${EMERGENCY_REQUEST_STATUSES.join(", ")}`
+        );
+        error.statusCode = 400;
+        error.expose = true;
+        throw error;
+      }
 
       const updated = await emergencyRepo.updateEmergencyRequestStatus(
         emergencyRequestId,

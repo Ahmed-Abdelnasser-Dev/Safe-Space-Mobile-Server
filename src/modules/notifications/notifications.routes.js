@@ -1,14 +1,15 @@
 import { Router } from "express";
-import { createNotificationsController } from "./notifications.controller.js";
-import { createNotificationsService } from "./notifications.service.js";
-import { getPrisma } from "../../db/prisma.js";
+import { requireAuth } from "../../middleware/auth.middleware.js";
 
-export const notificationsRouter = Router();
+export function createNotificationsRouter({ notificationsController }) {
+  const notificationsRouter = Router();
 
-const prisma = getPrisma();
-const controller = createNotificationsController({
-  notificationsService: createNotificationsService({ prisma }),
-});
+  notificationsRouter.post(
+    "/notifications/send-accident-notification",
+    requireAuth,
+    notificationsController.sendAccidentNotification
+  );
 
-notificationsRouter.post("/notifications/send-accident-notification", controller.sendAccidentNotification);
+  return notificationsRouter;
+}
 

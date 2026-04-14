@@ -1,14 +1,14 @@
 import { createFcmProvider } from "./fcm.provider.js";
+import { buildAccidentNotificationPayload } from "./application/notifications.payload.js";
 
 export function createNotificationsService({ prisma, provider = createFcmProvider(prisma) }) {
   return {
     async sendAccidentNotification({ accidentId, userIds, title, body, streetName, data }) {
-      const payload = {
-        type: "ACCIDENT",
+      const payload = buildAccidentNotificationPayload({
         accidentId,
-        ...(data || {}),
-        ...(streetName ? { streetName } : {}),
-      };
+        streetName,
+        data,
+      });
 
       const result = await provider.sendToUsers({ userIds, title, body, data: payload });
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { createAccidentsRouter } from "./modules/accidents/accidents.routes.js";
 import { createCentralUnitRouter } from "./modules/centralUnit/centralUnit.routes.js";
-import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { createNotificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { createAuthRouter } from "./modules/auth/auth.routes.js";
 import { createProfileRouter } from "./modules/profile/profile.routes.js";
 import { createEmergencyRouter } from "./modules/emergency/emergency.routes.js";
@@ -15,6 +15,7 @@ import { createCentralUnitRepo } from "./modules/centralUnit/centralUnit.repo.js
 import { createCentralUnitService } from "./modules/centralUnit/centralUnit.service.js";
 import { createCentralUnitController } from "./modules/centralUnit/centralUnit.controller.js";
 import { createNotificationsService } from "./modules/notifications/notifications.service.js";
+import { createNotificationsController } from "./modules/notifications/notifications.controller.js";
 import { createAuthRepo } from "./modules/auth/auth.repo.js";
 import { createAuthService } from "./modules/auth/auth.service.js";
 import { createAuthController } from "./modules/auth/auth.controller.js";
@@ -75,7 +76,13 @@ export function createRoutes(deps = {}) {
       centralUnitController: createCentralUnitController({ centralUnitService }),
     })
   );
-  router.use(notificationsRouter);
+  router.use(
+    createNotificationsRouter({
+      notificationsController: createNotificationsController({
+        notificationsService,
+      }),
+    })
+  );
 
   // Profile endpoints
   const profileService = createProfileService({
