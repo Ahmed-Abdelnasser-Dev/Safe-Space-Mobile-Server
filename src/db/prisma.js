@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 
+/** @type {PrismaClient | undefined} */
 let prisma;
 
+/** @returns {PrismaClient} */
 export function getPrisma() {
   if (!prisma) {
     prisma = new PrismaClient({

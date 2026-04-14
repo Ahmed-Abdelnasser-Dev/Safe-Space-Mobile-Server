@@ -3,7 +3,8 @@ export const ACCOUNT_LOCK_DURATION_MS = 15 * 60 * 1000;
 export const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 export const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
-export const AUTH_ERROR_CODES = {
+/** @type {Readonly<Record<string, string>>} */
+export const AUTH_ERROR_CODES = Object.freeze({
   CONFLICT: "CONFLICT",
   UNAUTHORIZED: "UNAUTHORIZED",
   ACCOUNT_LOCKED: "ACCOUNT_LOCKED",
@@ -11,4 +12,4 @@ export const AUTH_ERROR_CODES = {
   INVALID_TOKEN: "INVALID_TOKEN",
   TOKEN_EXPIRED: "TOKEN_EXPIRED",
   ALREADY_VERIFIED: "ALREADY_VERIFIED",
-};
+});

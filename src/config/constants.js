@@ -1,6 +1,7 @@
 export const APP_NAME = "safespace-mobile-server";
 
-export const ERROR_CODES = {
+/** @type {Readonly<Record<string, string>>} */
+export const ERROR_CODES = Object.freeze({
   VALIDATION_ERROR: "VALIDATION_ERROR",
   UNAUTHORIZED: "UNAUTHORIZED",
   FORBIDDEN: "FORBIDDEN",
@@ -8,5 +9,5 @@ export const ERROR_CODES = {
   CONFLICT: "CONFLICT",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   CENTRAL_UNIT_AUTH_FAILED: "CENTRAL_UNIT_AUTH_FAILED",
-};
+});
 

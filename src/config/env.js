@@ -5,6 +5,8 @@ import { z } from "zod";
 
 dotenv.config();
 
+/** @typedef {{ path: string, message: string }} EnvValidationIssue */
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -42,21 +44,36 @@ const envSchema = z.object({
   TLS_KEY_PATH: z.string().optional(),
 });
 
+/**
+ * @param {EnvValidationIssue[]} details
+ * @returns {import("../types/errors").AppError}
+ */
+function createEnvValidationError(details) {
+  /** @type {import("../types/errors").AppError} */
+  const err = new Error("Invalid environment variables");
+  err.code = "ENV_VALIDATION_ERROR";
+  err.details = details;
+  return err;
+}
+
 export function getEnv() {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
+    /** @type {EnvValidationIssue[]} */
     const details = parsed.error.issues.map((i) => ({
       path: i.path.join("."),
       message: i.message,
     }));
-    const err = new Error("Invalid environment variables");
-    err.code = "ENV_VALIDATION_ERROR";
-    err.details = details;
-    throw err;
+
+    throw createEnvValidationError(details);
   }
   return parsed.data;
 }
 
+/**
+ * @param {string | null | undefined} p
+ * @returns {Buffer | null}
+ */
 export function readFileIfExists(p) {
   if (!p) return null;
   const abs = path.isAbsolute(p) ? p : path.join(process.cwd(), p);

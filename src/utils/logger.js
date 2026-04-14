@@ -1,7 +1,8 @@
 import pino from "pino";
 import { APP_NAME } from "../config/constants.js";
 
-export const logger = pino({
+/** @type {import("pino").LoggerOptions} */
+const loggerOptions = {
   name: APP_NAME,
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
   redact: {
@@ -14,5 +15,7 @@ export const logger = pino({
     ],
     remove: true,
   },
-});
+};
+
+export const logger = pino(loggerOptions);
 

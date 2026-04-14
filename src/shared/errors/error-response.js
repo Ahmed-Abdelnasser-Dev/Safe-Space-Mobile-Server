@@ -1,5 +1,15 @@
 import { ERROR_CODES } from "../../config/constants.js";
 
+/** @typedef {import("../../types/errors").AppError} AppError */
+/** @typedef {{ path: string, message: string }} ValidationIssue */
+/** @typedef {{ message?: string, stack?: string }} DebugBody */
+/** @typedef {{ code: string, message: string, requestId: string | undefined, details?: ValidationIssue[], debug?: DebugBody }} ErrorResponseBody */
+/** @typedef {{ status: number, body: ErrorResponseBody }} ErrorResponse */
+
+/**
+ * @param {unknown} status
+ * @returns {number}
+ */
 function normalizeStatus(status) {
   const code = Number(status);
   if (!Number.isInteger(code) || code < 400 || code > 599) {
@@ -8,6 +18,10 @@ function normalizeStatus(status) {
   return code;
 }
 
+/**
+ * @param {AppError | undefined | null} err
+ * @returns {ValidationIssue[]}
+ */
 function buildValidationDetails(err) {
   if (!Array.isArray(err?.issues)) return [];
   return err.issues.map((issue) => ({
@@ -16,6 +30,10 @@ function buildValidationDetails(err) {
   }));
 }
 
+/**
+ * @param {{ err: AppError | undefined | null, requestId: string | undefined, nodeEnv: string | undefined }} args
+ * @returns {ErrorResponse}
+ */
 export function buildErrorResponse({ err, requestId, nodeEnv }) {
   if (err?.name === "ZodError") {
     return {
@@ -44,6 +62,7 @@ export function buildErrorResponse({ err, requestId, nodeEnv }) {
       ? "Internal server error"
       : err?.message || "Request failed";
 
+  /** @type {ErrorResponseBody} */
   const body = {
     code,
     message,
