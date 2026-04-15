@@ -5,6 +5,13 @@ import { createApp } from "./app.js";
 import { getEnv, readFileIfExists } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 
+/** @typedef {ReturnType<typeof getEnv>} RuntimeEnv */
+
+/**
+ * @param {import("express").Express} app
+ * @param {RuntimeEnv} env
+ * @returns {http.Server | https.Server}
+ */
 function createServer(app, env) {
   const cert = readFileIfExists(env.TLS_CERT_PATH);
   const key = readFileIfExists(env.TLS_KEY_PATH);
@@ -29,6 +36,7 @@ function createServer(app, env) {
   return http.createServer(app);
 }
 
+/** @returns {void} */
 function main() {
   const env = getEnv();
   const app = createApp();

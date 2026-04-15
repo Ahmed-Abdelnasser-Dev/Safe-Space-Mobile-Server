@@ -26,21 +26,142 @@ import { createEmergencyRepo } from "./modules/emergency/emergency.repo.js";
 import { createEmergencyService } from "./modules/emergency/emergency.service.js";
 import { createEmergencyController } from "./modules/emergency/emergency.controller.js";
 
+/** @typedef {ReturnType<typeof getPrisma>} PrismaClientLike */
+
+/**
+ * @typedef {{
+ *   register: import("express").RequestHandler,
+ *   login: import("express").RequestHandler,
+ *   refresh: import("express").RequestHandler,
+ *   logout: import("express").RequestHandler,
+ *   updateFcmToken: import("express").RequestHandler,
+ *   verifyEmail: import("express").RequestHandler,
+ *   resendVerificationEmail: import("express").RequestHandler
+ * }} AuthController
+ */
+
+/**
+ * @typedef {{
+ *   register: (input: import("./types/index").AuthRegisterInput) => Promise<unknown>,
+ *   login: (input: import("./types/index").AuthLoginInput & { ipAddress: string, userAgent: string }) => Promise<unknown>,
+ *   refresh: (input: { refreshToken: string }) => Promise<unknown>,
+ *   logout: (input: { refreshToken: string }) => Promise<unknown>,
+ *   updateFcmToken: (input: { sessionId: string, fcmToken: string }) => Promise<unknown>,
+ *   verifyEmail: (input: { token: string }) => Promise<unknown>,
+ *   resendVerificationEmail: (input: { email: string }) => Promise<unknown>
+ * }} AuthService
+ */
+
+/**
+ * @typedef {{
+ *   sendAccidentNotification: (input: import("./types/index").SendAccidentNotificationInput) => Promise<{ ok: true, sent: number, failed: number }>,
+ *   notifyEmergencyServices?: (input: {
+ *     emergencyRequestId: string,
+ *     emergencyTypes: import("./types/index").EmergencyType[],
+ *     emergencyServices: import("./types/index").EmergencyService[],
+ *     location: import("./types/index").GeoLocation,
+ *     description: string
+ *   }) => Promise<unknown>
+ * }} NotificationsService
+ */
+
+/**
+ * @typedef {{
+ *   sendAccidentToCentralUnit: (input: {
+ *     accidentId: string,
+ *     description: string,
+ *     latitude: number,
+ *     longitude: number,
+ *     severity: "low" | "medium" | "high",
+ *     media: import("./types/index").AccidentMediaInput[]
+ *   }) => Promise<{ ok: true, centralUnitReferenceId: string } | { ok: false, reason: "not_configured" }>,
+ *   receiveAccidentFromCentralUnit: (input: {
+ *     centralUnitAccidentId: string,
+ *     occurredAt: string,
+ *     location: import("./types/index").GeoLocation
+ *   }) => Promise<{ ok: true }>,
+ *   sendEmergencyToCentralUnit?: (input: {
+ *     emergencyRequestId: string,
+ *     emergencyTypes: import("./types/index").EmergencyType[],
+ *     emergencyServices: import("./types/index").EmergencyService[],
+ *     description: string,
+ *     latitude: number,
+ *     longitude: number,
+ *     timestamp: Date,
+ *     photoUri: string | null,
+ *     requesterUserId: string | null
+ *   }) => Promise<unknown>
+ * }} CentralUnitService
+ */
+
+/**
+ * @typedef {{
+ *   reportAccident: (input: {
+ *     reporterUserId: string | null,
+ *     location: import("./types/index").GeoLocation,
+ *     message?: string,
+ *     occurredAt: string,
+ *     media: import("./types/index").AccidentMediaInput[]
+ *   }) => Promise<{ accidentId: string, status: string }>
+ * }} AccidentsService
+ */
+
+/**
+ * @typedef {{
+ *   createEmergencyRequest: (input: {
+ *     requesterUserId: string | null,
+ *     emergencyTypes: import("./types/index").EmergencyType[],
+ *     emergencyServices: import("./types/index").EmergencyService[],
+ *     description: string,
+ *     photoUri: string | null,
+ *     location: import("./types/index").GeoLocation,
+ *     timestamp?: string
+ *   }) => Promise<unknown>,
+ *   getEmergencyRequest: (id: string) => Promise<unknown | null>,
+ *   listEmergencyRequests: (options?: {
+ *     status?: import("./types/index").EmergencyRequestStatus,
+ *     limit?: number,
+ *     offset?: number,
+ *     userId?: string
+ *   }) => Promise<{ data: unknown[], total: number, limit: number, offset: number }>,
+ *   updateEmergencyRequestStatus: (id: string, status: string) => Promise<unknown>
+ * }} EmergencyService
+ */
+
+/**
+ * @typedef {{
+ *   prisma?: PrismaClientLike,
+ *   authController?: AuthController,
+ *   authService?: AuthService,
+ *   notificationsService?: NotificationsService,
+ *   centralUnitService?: CentralUnitService,
+ *   accidentsService?: AccidentsService,
+ *   emergencyService?: EmergencyService
+ * }} RoutesDeps
+ */
+
+/**
+ * @param {RoutesDeps} [deps]
+ * @returns {import("express").Router}
+ */
 export function createRoutes(deps = {}) {
   const router = Router();
 
+  /** @type {PrismaClientLike} */
   const prisma = deps.prisma || getPrisma();
 
+  /** @type {NotificationsService} */
   const notificationsService = deps.notificationsService || createNotificationsService({ prisma });
 
+  /** @type {CentralUnitService} */
   const centralUnitService =
     deps.centralUnitService ||
     createCentralUnitService({
       centralUnitRepo: createCentralUnitRepo(prisma),
-      accidentsRepo: createAccidentsRepo(prisma),
       notificationsService,
     });
 
+  /** @type {AccidentsService} */
   const accidentsService =
     deps.accidentsService ||
     createAccidentsService({
@@ -48,6 +169,7 @@ export function createRoutes(deps = {}) {
       centralUnitService,
     });
 
+  /** @type {EmergencyService} */
   const emergencyService =
     deps.emergencyService ||
     createEmergencyService({
@@ -57,15 +179,19 @@ export function createRoutes(deps = {}) {
     });
 
   // Keep modules mounted at root to match required paths
+  /** @type {AuthController} */
+  let authController;
   if (deps.authController) {
-    router.use(createAuthRouter({ authController: deps.authController }));
+    authController = deps.authController;
   } else if (deps.authService) {
-    router.use(createAuthRouter({ authController: createAuthController({ authService: deps.authService }) }));
+    authController = createAuthController({ authService: deps.authService });
   } else {
     // Default runtime wiring
     const authService = createAuthService({ authRepo: createAuthRepo(prisma) });
-    router.use(createAuthRouter({ authController: createAuthController({ authService }) }));
+    authController = createAuthController({ authService });
   }
+  router.use(createAuthRouter({ authController }));
+
   router.use(
     createAccidentsRouter({
       accidentsController: createAccidentsController({ accidentsService }),

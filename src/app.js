@@ -3,7 +3,6 @@ import helmet from "helmet";
 import cors from "cors";
 import hpp from "hpp";
 import rateLimit from "express-rate-limit";
-import pinoHttp from "pino-http";
 import path from "path";
 
 import { requestIdMiddleware } from "./middleware/requestId.middleware.js";
@@ -12,10 +11,15 @@ import {
   notFoundMiddleware,
 } from "./middleware/error.middleware.js";
 import { requestLoggerMiddleware } from "./middleware/requestLogger.middleware.js";
-import { logger } from "./utils/logger.js";
 
 import { createRoutes } from "./routes.js";
 
+/** @typedef {Parameters<typeof createRoutes>[0]} RoutesDeps */
+
+/**
+ * @param {RoutesDeps} [deps]
+ * @returns {import("express").Express}
+ */
 export function createApp(deps = {}) {
   const app = express();
   app.disable("x-powered-by");
@@ -47,7 +51,10 @@ export function createApp(deps = {}) {
     }),
   );
 
-  app.get("/health", (req, res) => res.json({ ok: true }));
+  /** @type {import("express").RequestHandler} */
+  const healthHandler = (req, res) => res.json({ ok: true });
+
+  app.get("/health", healthHandler);
   // Serve uploaded files
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
