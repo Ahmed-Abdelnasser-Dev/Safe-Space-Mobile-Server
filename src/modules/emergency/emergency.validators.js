@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+/** @typedef {import("../../types/index").CreateEmergencyRequestInput} CreateEmergencyRequestInput */
+
+/** @typedef {{ id: string }} EmergencyRequestParams */
+
+/**
+ * @typedef {{
+ *   status?: "QUEUED" | "SENT" | "FAILED",
+ *   limit?: number,
+ *   offset?: number
+ * }} EmergencyRequestListQuery
+ */
+
 /**
  * Location schema for geospatial coordinates validation
  * Ensures latitude and longitude are within valid ranges
@@ -67,3 +79,12 @@ export const listEmergencyRequestsSchema = z
     offset: z.number().int().min(0).default(0),
   })
   .optional();
+
+/** @type {import("zod").ZodType<CreateEmergencyRequestInput>} */
+const _createEmergencyRequestSchemaTypecheck = createEmergencyRequestSchema;
+
+/** @type {import("zod").ZodType<EmergencyRequestParams>} */
+const _getEmergencyRequestSchemaTypecheck = getEmergencyRequestSchema;
+
+/** @type {import("zod").ZodType<EmergencyRequestListQuery | undefined>} */
+const _listEmergencyRequestsSchemaTypecheck = listEmergencyRequestsSchema;

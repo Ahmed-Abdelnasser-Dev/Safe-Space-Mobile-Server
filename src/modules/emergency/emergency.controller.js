@@ -6,12 +6,45 @@ import {
 } from "./application/emergency.access-policy.js";
 import { EMERGENCY_REQUEST_STATUSES } from "./domain/emergency.constants.js";
 
+/** @typedef {import("../../types/index").EmergencyType} EmergencyType */
+/** @typedef {import("../../types/index").EmergencyService} EmergencyServiceType */
+/** @typedef {import("../../types/index").GeoLocation} GeoLocation */
+
+/**
+ * @typedef {{
+ *   requesterUserId: string | null,
+ *   emergencyTypes: EmergencyType[],
+ *   emergencyServices: EmergencyServiceType[],
+ *   description: string,
+ *   photoUri: string | null,
+ *   location: GeoLocation,
+ *   timestamp?: string
+ * }} CreateEmergencyRequestCommand
+ */
+
+/**
+ * @typedef {{
+ *   status?: "QUEUED" | "SENT" | "FAILED",
+ *   limit?: number,
+ *   offset?: number,
+ *   userId?: string
+ * }} EmergencyListOptions
+ */
+
+/**
+ * @typedef {{
+ *   createEmergencyRequest: (input: CreateEmergencyRequestCommand) => Promise<unknown>,
+ *   getEmergencyRequest: (id: string) => Promise<unknown | null>,
+ *   listEmergencyRequests: (options?: EmergencyListOptions) => Promise<{ data: unknown[], total: number, limit: number, offset: number }>,
+ *   updateEmergencyRequestStatus: (id: string, status: string) => Promise<unknown>
+ * }} EmergencyService
+ */
+
 /**
  * Emergency Controller
  * Handles HTTP requests for emergency operations
  * 
- * @param {Object} deps - Controller dependencies
- * @param {Object} deps.emergencyService - Emergency service instance
+ * @param {{ emergencyService: EmergencyService }} deps - Controller dependencies
  */
 export function createEmergencyController({ emergencyService }) {
   return {
@@ -23,6 +56,7 @@ export function createEmergencyController({ emergencyService }) {
      * @param {import('express').Response} res - Express response
      * @param {import('express').NextFunction} next - Express next function
      */
+    /** @type {import("express").RequestHandler} */
     createEmergencyRequestHandler: async (req, res, next) => {
       try {
         const bodyData = parseEmergencyCreateRequest({
@@ -71,6 +105,7 @@ export function createEmergencyController({ emergencyService }) {
      * @param {import('express').Response} res - Express response
      * @param {import('express').NextFunction} next - Express next function
      */
+    /** @type {import("express").RequestHandler} */
     getEmergencyRequestHandler: async (req, res, next) => {
       try {
         const params = getEmergencyRequestSchema.parse({ id: req.params.id });
@@ -101,6 +136,7 @@ export function createEmergencyController({ emergencyService }) {
      * @param {import('express').Response} res - Express response
      * @param {import('express').NextFunction} next - Express next function
      */
+    /** @type {import("express").RequestHandler} */
     listEmergencyRequestsHandler: async (req, res, next) => {
       try {
         const query = listEmergencyRequestsSchema.parse({
@@ -152,6 +188,7 @@ export function createEmergencyController({ emergencyService }) {
      * @param {import('express').Response} res - Express response
      * @param {import('express').NextFunction} next - Express next function
      */
+    /** @type {import("express").RequestHandler} */
     updateEmergencyRequestStatusHandler: async (req, res, next) => {
       try {
         const params = getEmergencyRequestSchema.parse({ id: req.params.id });

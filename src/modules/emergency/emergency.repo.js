@@ -1,25 +1,94 @@
 /**
+ * @typedef {{
+ *   id: string,
+ *   emergencyTypes: string[],
+ *   emergencyServices: string[],
+ *   description: string,
+ *   photoUri: string | null,
+ *   lat: number,
+ *   lng: number,
+ *   timestamp: Date,
+ *   status: string,
+ *   createdAt: Date
+ * }} EmergencyRequestSummary
+ */
+
+/**
+ * @typedef {{
+ *   id: string,
+ *   requesterUserId: string | null,
+ *   emergencyTypes: string[],
+ *   emergencyServices: string[],
+ *   description: string,
+ *   photoUri: string | null,
+ *   lat: number,
+ *   lng: number,
+ *   timestamp: Date,
+ *   status: string,
+ *   createdAt: Date,
+ *   updatedAt: Date,
+ *   requester: {
+ *     id: string,
+ *     fullName: string | null,
+ *     email: string,
+ *     phoneNumber: string | null,
+ *     bloodType: string | null,
+ *     allergies: string[] | null,
+ *     chronicConditions: string[] | null,
+ *     emergencyContactName: string | null,
+ *     emergencyContactPhone: string | null
+ *   } | null
+ * }} EmergencyRequestDetails
+ */
+
+/**
+ * @typedef {{
+ *   requesterUserId: string | null,
+ *   emergencyTypes: string[],
+ *   emergencyServices: string[],
+ *   description: string,
+ *   photoUri: string | null,
+ *   lat: number,
+ *   lng: number,
+ *   timestamp: Date,
+ *   status?: string
+ * }} EmergencyRequestCreateInput
+ */
+
+/**
+ * @typedef {{
+ *   status?: string,
+ *   limit?: number,
+ *   offset?: number,
+ *   userId?: string
+ * }} EmergencyListOptions
+ */
+
+/**
+ * @typedef {{
+ *   emergencyRequest: {
+ *     create: (input: { data: unknown, select: unknown }) => Promise<EmergencyRequestSummary>,
+ *     findUnique: (input: { where: { id: string }, select: unknown }) => Promise<EmergencyRequestDetails | null>,
+ *     findMany: (input: { where: Record<string, unknown>, select: unknown, orderBy: { timestamp: "desc" }, take: number, skip: number }) => Promise<EmergencyRequestSummary[]>,
+ *     update: (input: { where: { id: string }, data: { status: string }, select: unknown }) => Promise<{ id: string, status: string, updatedAt: Date }>,
+ *     count: (input: { where: Record<string, unknown> }) => Promise<number>
+ *   }
+ * }} EmergencyPrismaLike
+ */
+
+/**
  * Emergency Repository
  * Handles all database operations for emergency requests
  * 
- * @param {import('@prisma/client').PrismaClient} prisma - Prisma client instance
+ * @param {EmergencyPrismaLike} prisma - Prisma client instance
  */
 export function createEmergencyRepo(prisma) {
   return {
     /**
      * Create a new emergency request
      * 
-     * @param {Object} data - Emergency request data
-     * @param {string|null} data.requesterUserId - ID of the user making the request
-     * @param {Array<string>} data.emergencyTypes - Array of emergency types
-     * @param {Array<string>} data.emergencyServices - Array of emergency services needed
-     * @param {string} data.description - Description of the emergency
-     * @param {string|null} data.photoUri - Optional photo URI
-     * @param {number} data.lat - Latitude coordinate
-     * @param {number} data.lng - Longitude coordinate
-     * @param {Date} data.timestamp - Timestamp of the emergency
-     * @param {string} data.status - Status of the request (default: QUEUED)
-     * @returns {Promise<Object>} Created emergency request with ID
+    * @param {EmergencyRequestCreateInput} data - Emergency request data
+    * @returns {Promise<EmergencyRequestSummary>} Created emergency request with ID
      */
     async createEmergencyRequest(data) {
       return prisma.emergencyRequest.create({
@@ -53,7 +122,7 @@ export function createEmergencyRepo(prisma) {
      * Find emergency request by ID
      * 
      * @param {string} id - Emergency request ID
-     * @returns {Promise<Object|null>} Emergency request or null if not found
+    * @returns {Promise<EmergencyRequestDetails | null>} Emergency request or null if not found
      */
     async findEmergencyRequestById(id) {
       return prisma.emergencyRequest.findUnique({
@@ -91,12 +160,8 @@ export function createEmergencyRepo(prisma) {
     /**
      * List emergency requests with optional filtering
      * 
-     * @param {Object} options - Query options
-     * @param {string} options.status - Filter by status (optional)
-     * @param {number} options.limit - Maximum number of results
-     * @param {number} options.offset - Number of results to skip
-     * @param {string} options.userId - Filter by user ID (optional)
-     * @returns {Promise<Array<Object>>} List of emergency requests
+    * @param {EmergencyListOptions} [options] - Query options
+    * @returns {Promise<EmergencyRequestSummary[]>} List of emergency requests
      */
     async listEmergencyRequests(options = {}) {
       const { status, limit = 20, offset = 0, userId } = options;
@@ -138,7 +203,7 @@ export function createEmergencyRepo(prisma) {
      * 
      * @param {string} id - Emergency request ID
      * @param {string} status - New status (QUEUED, SENT, FAILED)
-     * @returns {Promise<Object>} Updated emergency request
+    * @returns {Promise<{ id: string, status: string, updatedAt: Date }>} Updated emergency request
      */
     async updateEmergencyRequestStatus(id, status) {
       return prisma.emergencyRequest.update({
@@ -155,7 +220,7 @@ export function createEmergencyRepo(prisma) {
     /**
      * Count emergency requests
      * 
-     * @param {Object} where - Filter conditions
+    * @param {Record<string, unknown>} [where] - Filter conditions
      * @returns {Promise<number>} Count of emergency requests
      */
     async countEmergencyRequests(where = {}) {

@@ -3,11 +3,19 @@ import { upload } from "../../middleware/upload.js";
 import { optionalAuth, requireAuth } from "../../middleware/auth.middleware.js";
 
 /**
+ * @typedef {{
+ *   createEmergencyRequestHandler: import("express").RequestHandler,
+ *   getEmergencyRequestHandler: import("express").RequestHandler,
+ *   listEmergencyRequestsHandler: import("express").RequestHandler,
+ *   updateEmergencyRequestStatusHandler: import("express").RequestHandler
+ * }} EmergencyController
+ */
+
+/**
  * Create Emergency Router
  * Defines all emergency-related routes
  * 
- * @param {Object} deps - Router dependencies
- * @param {Object} deps.emergencyController - Emergency controller instance
+ * @param {{ emergencyController: EmergencyController }} deps - Router dependencies
  * @returns {Router} Express router instance
  */
 export function createEmergencyRouter({ emergencyController }) {
