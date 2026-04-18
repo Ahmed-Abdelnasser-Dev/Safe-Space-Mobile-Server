@@ -102,8 +102,9 @@ export function createAuthService({
 
       // Generate email verification token
       const verificationToken = randomBytes(32).toString("hex");
+      const verificationTokenDigest = sha256Hex(verificationToken);
       const verificationExpiry = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
-      await authRepo.createEmailVerificationToken(user.id, verificationToken, verificationExpiry);
+      await authRepo.createEmailVerificationToken(user.id, verificationTokenDigest, verificationExpiry);
 
       // TODO: Send verification email with token
       // For now, we'll return the token in response (REMOVE IN PRODUCTION)
@@ -368,7 +369,8 @@ export function createAuthService({
 
     /** @param {{ token: string }} input */
     async verifyEmail({ token }) {
-      const user = await authRepo.findUserByVerificationToken(token);
+      const tokenDigest = sha256Hex(token);
+      const user = await authRepo.findUserByVerificationToken(tokenDigest);
       
       if (!user) {
         throw makeAuthError(400, AUTH_ERROR_CODES.INVALID_TOKEN, "Invalid or expired verification token");
@@ -414,8 +416,9 @@ export function createAuthService({
 
       // Generate new verification token
       const verificationToken = randomBytes(32).toString("hex");
+      const verificationTokenDigest = sha256Hex(verificationToken);
       const verificationExpiry = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
-      await authRepo.createEmailVerificationToken(user.id, verificationToken, verificationExpiry);
+      await authRepo.createEmailVerificationToken(user.id, verificationTokenDigest, verificationExpiry);
 
       // TODO: Send verification email
 

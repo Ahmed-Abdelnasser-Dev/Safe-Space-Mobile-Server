@@ -34,10 +34,14 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
 # Non-root
-RUN useradd -m -u 10001 appuser
+RUN useradd -m -u 10001 appuser \
+  && mkdir -p /app/uploads \
+  && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=20 CMD node -e "fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["sh", "-c", "npm run prisma:deploy && node dist/server.js"]
 

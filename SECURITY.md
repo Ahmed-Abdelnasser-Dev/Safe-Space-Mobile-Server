@@ -17,7 +17,7 @@ This document outlines the security measures implemented in the SafeSpace Mobile
 - Email verification: 5 emails per hour
 - Password reset: 3 attempts per hour
 
-**Configuration**: `src/middleware/rateLimit.middleware.js`
+**Configuration**: `src/middleware/rateLimit.middleware.ts`
 
 #### 2. Account Lockout
 **Purpose**: Protect against automated brute force attacks on user accounts
@@ -54,7 +54,7 @@ This document outlines the security measures implemented in the SafeSpace Mobile
 - X-Download-Options
 - X-Permitted-Cross-Domain-Policies
 
-**Configuration**: Enabled globally in `src/app.js`
+**Configuration**: Enabled globally in `src/app.ts`
 
 ---
 
@@ -85,6 +85,13 @@ This document outlines the security measures implemented in the SafeSpace Mobile
 - Configurable origins via `CORS_ORIGIN` environment variable
 - Credentials support enabled
 - Comma-separated list for multiple allowed origins
+
+#### Central Unit Inbound Proxy Hardening
+- Proxy mode requires a verified header (`CENTRAL_UNIT_PROXY_VERIFIED_HEADER`)
+- Optional shared secret validation for proxy mode:
+  - `CENTRAL_UNIT_PROXY_SHARED_SECRET`
+  - `CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER`
+- Recommended: use `CENTRAL_UNIT_INBOUND_AUTH_MODE=mtls` whenever direct TLS client cert validation is feasible
 
 #### HTTP Parameter Pollution (HPP) Protection
 - Prevents attacks via duplicate URL parameters
@@ -282,4 +289,4 @@ For security issues or vulnerabilities, please contact:
 
 ---
 
-Last Updated: February 8, 2026
+Last Updated: April 18, 2026

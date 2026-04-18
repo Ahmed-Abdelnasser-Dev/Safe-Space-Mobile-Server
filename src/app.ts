@@ -21,6 +21,12 @@ export function createApp(deps: RoutesDeps = {}): Express {
   const app = express();
   app.disable("x-powered-by");
 
+  const corsOrigin = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",").map((v) => v.trim()).filter(Boolean)
+    : process.env.NODE_ENV === "production"
+    ? false
+    : true;
+
   app.use(requestIdMiddleware);
 
   // Human-readable dev logging line per request
@@ -29,10 +35,8 @@ export function createApp(deps: RoutesDeps = {}): Express {
   app.use(helmet());
   app.use(
     cors({
-      origin: process.env.CORS_ORIGIN
-        ? process.env.CORS_ORIGIN.split(",")
-        : true,
-      credentials: true,
+      origin: corsOrigin,
+      credentials: corsOrigin !== false,
     }),
   );
   app.use(hpp());

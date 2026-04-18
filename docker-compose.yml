@@ -15,23 +15,33 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
 
   api:
     build: .
     environment:
       NODE_ENV: production
       PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:5173}
       DATABASE_URL: postgresql://postgres:postgres@db:5432/safeespace_mobile_server_db?schema=public
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
-      CENTRAL_UNIT_INBOUND_AUTH_MODE: "proxy"
-      CENTRAL_UNIT_PROXY_VERIFIED_HEADER: "x-client-cert-verified"
+      CENTRAL_UNIT_INBOUND_AUTH_MODE: ${CENTRAL_UNIT_INBOUND_AUTH_MODE:-proxy}
+      CENTRAL_UNIT_PROXY_VERIFIED_HEADER: ${CENTRAL_UNIT_PROXY_VERIFIED_HEADER:-x-client-cert-verified}
+      CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER: ${CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER:-x-central-unit-proxy-secret}
+      CENTRAL_UNIT_PROXY_SHARED_SECRET: ${CENTRAL_UNIT_PROXY_SHARED_SECRET:?CENTRAL_UNIT_PROXY_SHARED_SECRET is required when using proxy inbound auth}
       CENTRAL_UNIT_BASE_URL: "http://central-unit:8080"
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${API_PORT:-3103}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
 
 volumes:
   db_data:

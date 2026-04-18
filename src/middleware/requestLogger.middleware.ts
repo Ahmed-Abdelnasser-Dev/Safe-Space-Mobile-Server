@@ -1,5 +1,31 @@
 import type { Request, Response, NextFunction } from "express";
 
+const MAX_PREVIEW_LENGTH = 300;
+const SENSITIVE_RESPONSE_KEYS = new Set([
+  "accessToken",
+  "refreshToken",
+  "password",
+  "token",
+  "emailVerificationToken",
+]);
+
+function stringifyForLog(body: unknown): string {
+  const serialized = JSON.stringify(body, (key, value) => {
+    if (SENSITIVE_RESPONSE_KEYS.has(key)) {
+      return "[REDACTED]";
+    }
+    return value;
+  });
+
+  if (typeof serialized !== "string") {
+    return "[unserializable]";
+  }
+
+  return serialized.length > MAX_PREVIEW_LENGTH
+    ? `${serialized.slice(0, MAX_PREVIEW_LENGTH)}...(truncated)`
+    : serialized;
+}
+
 /**
  * @param {import("express").Request} req
  * @param {import("express").Response} res
@@ -18,9 +44,11 @@ export function requestLoggerMiddleware(req: Request, res: Response, next: NextF
 
   res.json = ((body: unknown) => {
     try {
-      // Keep a small, safe preview for logging (truncate large bodies)
-      const str = JSON.stringify(body);
-      responseBodyPreview = str.length > 300 ? str.slice(0, 300) + "...(truncated)" : str;
+      if ((req.originalUrl || req.url).startsWith("/auth/")) {
+        responseBodyPreview = "[redacted for auth route]";
+      } else {
+        responseBodyPreview = stringifyForLog(body);
+      }
     } catch {
       responseBodyPreview = "[unserializable]";
     }

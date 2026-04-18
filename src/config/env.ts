@@ -11,6 +11,7 @@ type EnvValidationIssue = { path: string; message: string };
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
+  CORS_ORIGIN: z.string().optional(),
 
   // Database
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
@@ -30,7 +31,7 @@ const envSchema = z.object({
   // Central Unit outbound
   CENTRAL_UNIT_BASE_URL: z.string().url().optional(),
 
-  // Central Unit inbound auth (dev default: proxy header)
+  // Central Unit inbound auth
   CENTRAL_UNIT_INBOUND_AUTH_MODE: z
     .enum(["mtls", "proxy", "off"])
     .default("proxy"),
@@ -39,6 +40,10 @@ const envSchema = z.object({
   CENTRAL_UNIT_PROXY_VERIFIED_HEADER: z
     .string()
     .default("x-client-cert-verified"),
+  CENTRAL_UNIT_PROXY_SHARED_SECRET: z.string().min(16).optional(),
+  CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER: z
+    .string()
+    .default("x-central-unit-proxy-secret"),
 
   // Server TLS (for local/dev mTLS)
   TLS_CERT_PATH: z.string().optional(),
