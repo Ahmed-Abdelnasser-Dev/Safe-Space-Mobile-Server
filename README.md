@@ -1,6 +1,6 @@
 # SafeSpace Mobile Server
 
-Express (JavaScript) + PostgreSQL (Prisma) backend for:
+Express (TypeScript) + PostgreSQL (Prisma) backend for:
 - Accidents & Emergency reporting
 - Central Unit integration over HTTP + inbound webhook protected by **mTLS**
 - (Implemented last) JWT auth (access/refresh) + push notifications
@@ -11,18 +11,33 @@ Express (JavaScript) + PostgreSQL (Prisma) backend for:
 
 ## Quick start (local)
 
-1) Create `.env` from `.env.example` and set `DATABASE_URL`.
-
-2) Install deps:
+1) Install deps:
 
 ```bash
 npm install
 ```
 
-3) Start:
+2) Create local env file:
 
 ```bash
-npm run dev
+cp .env.example .env
+```
+
+3) Startup preflight (required keys in `.env`):
+- `DATABASE_URL`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+
+4) Run with one command:
+
+```bash
+npm start
+```
+
+No `.env` file option (single command):
+
+```bash
+DATABASE_URL='postgresql://postgres:postgres@localhost:5432/safeespace_mobile_server_db?schema=public' JWT_ACCESS_SECRET='dev-access-secret' JWT_REFRESH_SECRET='dev-refresh-secret' npm start
 ```
 
 Server health check: `GET /health`
@@ -34,8 +49,25 @@ docker compose up --build
 ```
 
 This starts:
-- `db`: Postgres 16
-- `api`: Node server
+- `db`: Postgres 16 on `localhost:5432` (or `${POSTGRES_PORT}`)
+- `api`: SafeSpace API on `localhost:3103` (or `${API_PORT}`), container port `3000`
+
+Health check:
+
+```bash
+curl -fsS http://127.0.0.1:3103/health
+```
+
+Notes:
+- Docker compose requires `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` (read from local `.env` by default).
+- Docker compose defaults to `NODE_ENV=production` to avoid verbose response-body logging.
+- The API image runs Prisma deploy on startup, then serves compiled output (`node dist/server.js`).
+
+If host ports are already in use, override them per run:
+
+```bash
+API_PORT=3200 POSTGRES_PORT=55432 docker compose up --build
+```
 
 ## Endpoints (must match exactly)
 

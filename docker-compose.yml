@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,9 +19,11 @@ services:
   api:
     build: .
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@db:5432/safeespace_mobile_server_db?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       CENTRAL_UNIT_INBOUND_AUTH_MODE: "proxy"
       CENTRAL_UNIT_PROXY_VERIFIED_HEADER: "x-client-cert-verified"
       CENTRAL_UNIT_BASE_URL: "http://central-unit:8080"
@@ -29,7 +31,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "${API_PORT:-3103}:3000"
 
 volumes:
   db_data:

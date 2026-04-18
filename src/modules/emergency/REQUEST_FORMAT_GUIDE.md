@@ -236,7 +236,7 @@ const createEmergencyRequestWithPhoto = async (photoUri: string) => {
     uri: photoUri,
     name: filename,
     type: type,
-  } as any);
+  } as unknown);
 
   // Headers - don't set Content-Type for FormData
   const headers = {
