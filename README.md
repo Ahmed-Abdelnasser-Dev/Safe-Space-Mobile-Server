@@ -1,8 +1,8 @@
 # SafeSpace Mobile Server
 
-Express (JavaScript) + PostgreSQL (Prisma) backend for:
+Express (TypeScript) + PostgreSQL (Prisma) backend for:
 - Accidents & Emergency reporting
-- Central Unit integration over HTTP + inbound webhook protected by **mTLS**
+- Central Unit integration over HTTP + inbound webhook protected by **mTLS** or verified proxy headers
 - (Implemented last) JWT auth (access/refresh) + push notifications
 
 ## Requirements
@@ -11,18 +11,38 @@ Express (JavaScript) + PostgreSQL (Prisma) backend for:
 
 ## Quick start (local)
 
-1) Create `.env` from `.env.example` and set `DATABASE_URL`.
-
-2) Install deps:
+1) Install deps:
 
 ```bash
 npm install
 ```
 
-3) Start:
+2) Create local env file:
 
 ```bash
-npm run dev
+cp .env.example .env
+```
+
+3) Startup preflight (required keys in `.env`):
+- `DATABASE_URL`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+
+Recommended hardening keys:
+- `CORS_ORIGIN`
+- `CENTRAL_UNIT_INBOUND_AUTH_MODE`
+- `CENTRAL_UNIT_PROXY_SHARED_SECRET` (required when using proxy inbound auth)
+
+4) Run with one command:
+
+```bash
+npm start
+```
+
+No `.env` file option (single command):
+
+```bash
+DATABASE_URL='postgresql://postgres:postgres@localhost:5432/safeespace_mobile_server_db?schema=public' JWT_ACCESS_SECRET='dev-access-secret' JWT_REFRESH_SECRET='dev-refresh-secret' npm start
 ```
 
 Server health check: `GET /health`
@@ -34,8 +54,26 @@ docker compose up --build
 ```
 
 This starts:
-- `db`: Postgres 16
-- `api`: Node server
+- `db`: Postgres 16 on `localhost:5432` (or `${POSTGRES_PORT}`)
+- `api`: SafeSpace API on `localhost:3103` (or `${API_PORT}`), container port `3000`
+
+Health check:
+
+```bash
+curl -fsS http://127.0.0.1:3103/health
+```
+
+Notes:
+- Docker compose requires `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` (read from local `.env` by default).
+- Docker compose also requires `CENTRAL_UNIT_PROXY_SHARED_SECRET` when `CENTRAL_UNIT_INBOUND_AUTH_MODE=proxy`.
+- Docker compose defaults to `NODE_ENV=production` to avoid verbose response-body logging.
+- The API image runs Prisma deploy on startup, then serves compiled output (`node dist/server.js`).
+
+If host ports are already in use, override them per run:
+
+```bash
+API_PORT=3200 POSTGRES_PORT=55432 docker compose up --build
+```
 
 ## Endpoints (must match exactly)
 
@@ -44,6 +82,9 @@ This starts:
   - `POST /auth/login`
   - `POST /auth/refresh-token`
   - `POST /auth/logout`
+  - `POST /auth/update-fcm-token`
+  - `POST /auth/verify-email`
+  - `POST /auth/resend-verification`
 - Accidents:
   - `POST /accident/report-accident`
 - Emergency:
@@ -57,14 +98,22 @@ This starts:
 - Notifications:
   - `POST /notifications/send-accident-notification`
 - Profile:
-  - `GET /profile` - Get user profile (auth required)
-  - `PATCH /profile` - Update user profile (auth required)
+  - `GET /me/profile`
+  - `GET /me/medical-info`
+  - `PUT /me/medical-info`
+  - `GET /me/identification`
+  - `PUT /me/identification`
+  - `GET /me/personal-info`
+  - `PATCH /me/personal-info`
 
 ## Central Unit inbound mTLS
 
 This project supports two deployment modes for the inbound webhook:
 - **Direct Node TLS (dev/local)**: configure `TLS_CERT_PATH`, `TLS_KEY_PATH`, and `CENTRAL_UNIT_MTLS_CA_CERT_PATH`, set `CENTRAL_UNIT_INBOUND_AUTH_MODE=mtls`.
-- **Proxy terminated mTLS (prod typical)**: configure your reverse proxy/ingress to enforce mTLS and forward a verified header, set `CENTRAL_UNIT_INBOUND_AUTH_MODE=proxy`.
+- **Proxy terminated mTLS (prod typical)**: configure your reverse proxy/ingress to enforce mTLS and forward a verified header, set `CENTRAL_UNIT_INBOUND_AUTH_MODE=proxy` and configure:
+  - `CENTRAL_UNIT_PROXY_VERIFIED_HEADER`
+  - `CENTRAL_UNIT_PROXY_SHARED_SECRET`
+  - `CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER`
 
 ## Prisma note (offline environments)
 
@@ -79,11 +128,19 @@ An initial SQL migration is committed at `prisma/migrations/0001_init/migration.
 ## Postman
 
 Collection file: `postman/safespace-mobile-server.postman_collection.json`  
-Variables: `baseUrl`, `accessToken`, `refreshToken`
+Variables: `baseUrl`, `accessToken`, `refreshToken`, `emergencyRequestId`, `proxySharedSecret`
 
 ## Tests
 
 ```bash
+npm test
+```
+
+## Verification
+
+```bash
+npm run typecheck
+npm run build
 npm test
 ```
 

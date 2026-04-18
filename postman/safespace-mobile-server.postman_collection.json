@@ -6,14 +6,31 @@
   "item": [
     {
       "name": "Health",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{baseUrl}}/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["health"]
+      "item": [
+        {
+          "name": "GET /health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
         }
-      }
+      ]
     },
     {
       "name": "Auth",
@@ -25,9 +42,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
-                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Stores auth tokens when present', function () {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.accessToken) pm.environment.set('accessToken', body.accessToken);",
+                  "  if (body && body.refreshToken) pm.environment.set('refreshToken', body.refreshToken);",
+                  "});"
                 ]
               }
             }
@@ -37,7 +59,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"strong-password\",\n  \"fullName\": \"User Name\",\n  \"phone\": \"+201234567890\"\n}"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"strong-password-123\",\n  \"fullName\": \"User Name\",\n  \"phone\": \"+201234567890\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
@@ -53,9 +75,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
-                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Stores auth tokens when present', function () {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.accessToken) pm.environment.set('accessToken', body.accessToken);",
+                  "  if (body && body.refreshToken) pm.environment.set('refreshToken', body.refreshToken);",
+                  "});"
                 ]
               }
             }
@@ -65,7 +92,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{ \"email\": \"user@example.com\", \"password\": \"strong-password\", \"deviceId\": \"string\", \"fcmToken\": \"string\" }"
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"strong-password-123\",\n  \"deviceId\": \"device-001\",\n  \"fcmToken\": \"fcm-token-value\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
@@ -81,9 +108,14 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const json = pm.response.json();",
-                  "if (json && json.accessToken) pm.environment.set('accessToken', json.accessToken);",
-                  "if (json && json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);"
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Stores refreshed auth tokens when present', function () {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.accessToken) pm.environment.set('accessToken', body.accessToken);",
+                  "  if (body && body.refreshToken) pm.environment.set('refreshToken', body.refreshToken);",
+                  "});"
                 ]
               }
             }
@@ -91,7 +123,10 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{ \"refreshToken\": \"{{refreshToken}}\" }" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/refresh-token",
               "host": ["{{baseUrl}}"],
@@ -104,27 +139,84 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{ \"refreshToken\": \"{{refreshToken}}\" }" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
               "host": ["{{baseUrl}}"],
               "path": ["auth", "logout"]
             }
           }
-        }
-      ]
-    },
-    {
-      "name": "Accidents & Emergency",
-      "item": [
+        },
         {
-          "name": "POST /accident/report-accident",
+          "name": "POST /auth/update-fcm-token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"11111111-1111-4111-8111-111111111111\",\n  \"fcmToken\": \"new-fcm-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/update-fcm-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "update-fcm-token"]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/verify-email",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 },\n  \"message\": \"optional message from the user\",\n  \"occurredAt\": \"2026-01-29T12:34:56.000Z\",\n  \"media\": [\n    { \"type\": \"image\", \"url\": \"https://example.com/image.jpg\" }\n  ]\n}"
+              "raw": "{\n  \"token\": \"email-verification-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "POST /auth/resend-verification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-verification"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accidents",
+      "item": [
+        {
+          "name": "POST /accident/report-accident",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "disabled": true }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 },\n  \"message\": \"Accident reported from mobile app\",\n  \"occurredAt\": \"2026-01-29T12:34:56.000Z\",\n  \"media\": [\n    { \"type\": \"image\", \"url\": \"https://example.com/image.jpg\" }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/accident/report-accident",
@@ -132,20 +224,92 @@
               "path": ["accident", "report-accident"]
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "Emergency",
+      "item": [
         {
-          "name": "POST /accident/emergency-request",
+          "name": "POST /emergency/request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Capture emergencyRequestId when present', function () {",
+                  "  const body = pm.response.json();",
+                  "  if (body && body.data && body.data.id) pm.environment.set('emergencyRequestId', body.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}", "disabled": true }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"requestedAt\": \"2026-01-29T12:34:56.000Z\",\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 },\n  \"message\": \"optional\",\n  \"requestTypes\": [\"police\", \"medical\"]\n}"
+              "raw": "{\n  \"emergencyTypes\": [\"FIRE\"],\n  \"emergencyServices\": [\"FIRE_DEPARTMENT\"],\n  \"description\": \"Building fire reported\",\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 },\n  \"timestamp\": \"2026-01-29T12:34:56.000Z\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/accident/emergency-request",
+              "raw": "{{baseUrl}}/emergency/request",
               "host": ["{{baseUrl}}"],
-              "path": ["accident", "emergency-request"]
+              "path": ["emergency", "request"]
+            }
+          }
+        },
+        {
+          "name": "GET /emergency/request/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/request/{{emergencyRequestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "request", "{{emergencyRequestId}}"]
+            }
+          }
+        },
+        {
+          "name": "GET /emergency/requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}", "disabled": true }],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/requests?status=QUEUED&limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "requests"],
+              "query": [
+                { "key": "status", "value": "QUEUED" },
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH /emergency/request/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SENT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency/request/{{emergencyRequestId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "request", "{{emergencyRequestId}}", "status"]
             }
           }
         }
@@ -158,10 +322,13 @@
           "name": "POST /central-unit/send-accident-to-central-unit",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"accidentId\": \"00000000-0000-0000-0000-000000000000\",\n  \"description\": \"string\",\n  \"latitude\": 30.0444,\n  \"longitude\": 31.2357,\n  \"severity\": \"low\",\n  \"media\": [ { \"type\": \"image\", \"url\": \"https://example.com/image.jpg\" } ]\n}"
+              "raw": "{\n  \"accidentId\": \"11111111-1111-4111-8111-111111111111\",\n  \"description\": \"Major accident\",\n  \"latitude\": 30.0444,\n  \"longitude\": 31.2357,\n  \"severity\": \"high\",\n  \"media\": [\n    { \"type\": \"image\", \"url\": \"https://example.com/image.jpg\" }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/central-unit/send-accident-to-central-unit",
@@ -174,10 +341,14 @@
           "name": "POST /central-unit/receive-accident-from-central-unit",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-client-cert-verified", "value": "true" },
+              { "key": "x-central-unit-proxy-secret", "value": "{{proxySharedSecret}}", "disabled": true }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"centralUnitAccidentId\": \"string\",\n  \"occurredAt\": \"2026-01-29T12:34:56.000Z\",\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 }\n}"
+              "raw": "{\n  \"centralUnitAccidentId\": \"central-incident-123\",\n  \"occurredAt\": \"2026-01-29T12:34:56.000Z\",\n  \"location\": { \"lat\": 30.0444, \"lng\": 31.2357 }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/central-unit/receive-accident-from-central-unit",
@@ -195,10 +366,13 @@
           "name": "POST /notifications/send-accident-notification",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"accidentId\": \"00000000-0000-0000-0000-000000000000\",\n  \"userIds\": [\"00000000-0000-0000-0000-000000000000\"],\n  \"title\": \"Accident nearby\",\n  \"body\": \"An accident was reported near you.\",\n  \"streetName\": \"Example Street Name\",\n  \"data\": { \"type\": \"ACCIDENT\", \"accidentId\": \"00000000-0000-0000-0000-000000000000\" }\n}"
+              "raw": "{\n  \"accidentId\": \"11111111-1111-4111-8111-111111111111\",\n  \"userIds\": [\"22222222-2222-4222-8222-222222222222\"],\n  \"title\": \"Accident nearby\",\n  \"body\": \"An accident was reported near you.\",\n  \"streetName\": \"Ring Road\",\n  \"data\": {\n    \"severity\": \"high\"\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/notifications/send-accident-notification",
@@ -216,9 +390,7 @@
           "name": "GET /me/profile",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": {
               "raw": "{{baseUrl}}/me/profile",
               "host": ["{{baseUrl}}"],
@@ -230,9 +402,7 @@
           "name": "GET /me/medical-info",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": {
               "raw": "{{baseUrl}}/me/medical-info",
               "host": ["{{baseUrl}}"],
@@ -250,7 +420,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bloodType\": \"A+\",\n  \"allergies\": [\"Penicillin\", \"Peanuts\"],\n  \"chronicConditions\": [\"Diabetes Type 2\", \"Hypertension\"],\n  \"currentMedications\": [\"Metformin 500mg\", \"Lisinopril 10mg\"],\n  \"disabilities\": [],\n  \"medicalNotes\": \"Patient is allergic to penicillin. Please use alternative antibiotics.\",\n  \"heightCm\": 175.5,\n  \"weightKg\": 78.2,\n  \"smoker\": false,\n  \"alcoholConsumption\": \"occasional\"\n}"
+              "raw": "{\n  \"bloodType\": \"A+\",\n  \"allergies\": [\"Penicillin\"],\n  \"chronicConditions\": [\"Hypertension\"],\n  \"currentMedications\": [\"Lisinopril\"],\n  \"disabilities\": [],\n  \"medicalNotes\": \"Carries inhaler\",\n  \"heightCm\": 175,\n  \"weightKg\": 78,\n  \"smoker\": false\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/me/medical-info",
@@ -263,9 +433,7 @@
           "name": "GET /me/identification",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": {
               "raw": "{{baseUrl}}/me/identification",
               "host": ["{{baseUrl}}"],
@@ -283,7 +451,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullLegalName\": \"Ahmed Mohamed Hassan\",\n  \"dateOfBirth\": \"1990-05-15T00:00:00.000Z\",\n  \"gender\": \"male\",\n  \"nationality\": \"Egyptian\",\n  \"nationalIdNumber\": \"29005150123456\",\n  \"emergencyContactName\": \"Fatma Hassan\",\n  \"emergencyContactPhone\": \"+201234567890\",\n  \"emergencyContactRelation\": \"Spouse\"\n}"
+              "raw": "{\n  \"fullLegalName\": \"Ahmed Mohamed Hassan\",\n  \"dateOfBirth\": \"1990-05-15T00:00:00.000Z\",\n  \"gender\": \"male\",\n  \"nationality\": \"Egyptian\",\n  \"nationalIdNumber\": \"29005150123456\",\n  \"passportNumber\": \"A12345678\",\n  \"emergencyContactName\": \"Fatma Hassan\",\n  \"emergencyContactPhone\": \"+201234567890\",\n  \"emergencyContactRelation\": \"Spouse\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/me/identification",
@@ -296,9 +464,7 @@
           "name": "GET /me/personal-info",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
-            ],
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": {
               "raw": "{{baseUrl}}/me/personal-info",
               "host": ["{{baseUrl}}"],
@@ -316,7 +482,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Ahmed H.\",\n  \"username\": \"ahmed_hassan\",\n  \"profilePictureUrl\": \"https://example.com/photos/ahmed.jpg\",\n  \"phoneNumber\": \"+201234567890\",\n  \"country\": \"Egypt\",\n  \"city\": \"Cairo\",\n  \"address\": \"123 Tahrir Street\",\n  \"street\": \"Tahrir Street\"\n}"
+              "raw": "{\n  \"displayName\": \"Ahmed H.\",\n  \"profilePictureUrl\": \"https://example.com/photos/ahmed.jpg\",\n  \"email\": \"ahmed@example.com\",\n  \"phoneNumber\": \"+201234567890\",\n  \"country\": \"Egypt\",\n  \"city\": \"Cairo\",\n  \"address\": \"123 Tahrir Street\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/me/personal-info",
@@ -331,7 +497,8 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "accessToken", "value": "" },
-    { "key": "refreshToken", "value": "" }
+    { "key": "refreshToken", "value": "" },
+    { "key": "emergencyRequestId", "value": "11111111-1111-4111-8111-111111111111" },
+    { "key": "proxySharedSecret", "value": "replace-with-proxy-shared-secret" }
   ]
 }
-
