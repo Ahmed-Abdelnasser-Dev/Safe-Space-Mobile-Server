@@ -23,7 +23,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:5173}
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/safeespace_mobile_server_db?schema=public
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/safeespace_mobile_server_db?schema=public}db?schema=public}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       CENTRAL_UNIT_INBOUND_AUTH_MODE: ${CENTRAL_UNIT_INBOUND_AUTH_MODE:-proxy}
