@@ -30,7 +30,7 @@ services:
       CENTRAL_UNIT_PROXY_VERIFIED_HEADER: ${CENTRAL_UNIT_PROXY_VERIFIED_HEADER:-x-client-cert-verified}
       CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER: ${CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER:-x-central-unit-proxy-secret}
       CENTRAL_UNIT_PROXY_SHARED_SECRET: ${CENTRAL_UNIT_PROXY_SHARED_SECRET:?CENTRAL_UNIT_PROXY_SHARED_SECRET is required when using proxy inbound auth}
-      CENTRAL_UNIT_BASE_URL: "http://central-unit:8080"
+      CENTRAL_UNIT_BASE_URL: ${CENTRAL_UNIT_BASE_URL:-http://central-unit:8080}
     depends_on:
       db:
         condition: service_healthy
