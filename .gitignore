@@ -11,8 +11,6 @@ uploads/
 .copilot/
 .github/
 
-prisma/migrations/
-
 certs/
 *.pem
 *.key
