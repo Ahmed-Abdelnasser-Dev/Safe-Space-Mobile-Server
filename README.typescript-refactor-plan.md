@@ -51,48 +51,48 @@
 ### Execution Plan
 
 #### Phase 1: Types and Interfaces
-- [ ] Step 1.1: Install TypeScript tooling and type packages (typescript, tsx, @types/node, @types/express, @types/jest, @types/jsonwebtoken, @types/multer).
-- [ ] Step 1.2: Create tsconfig.json with strict mode and ESM-compatible settings (module/moduleResolution: NodeNext, rootDir: src, outDir: dist, esModuleInterop: true).
-- [ ] Step 1.3: Use temporary mixed mode during migration (allowJs: true), then disable it at the end.
-- [ ] Step 1.4: Add typecheck/build/dev scripts while keeping existing JS scripts working.
-- [ ] Step 1.5: Add Express request augmentation declaration file.
-- [ ] Step 1.6: Add custom AppError type and type guard for normalized error handling.
-- [ ] Step 1.7: Add shared DTO/domain type modules used by auth, emergency, notifications, accidents, profile.
-- [ ] Verify: Run typecheck, run full tests, then smoke-check /health.
+- [x] Step 1.1: Install TypeScript tooling and type packages (typescript, tsx, @types/node, @types/express, @types/jest, @types/jsonwebtoken, @types/multer).
+- [x] Step 1.2: Create tsconfig.json with strict mode and ESM-compatible settings (module/moduleResolution: NodeNext, rootDir: src, outDir: dist, esModuleInterop: true).
+- [x] Step 1.3: Use temporary mixed mode during migration (allowJs: true), then disable it at the end.
+- [x] Step 1.4: Add typecheck/build/dev scripts while keeping existing JS scripts working.
+- [x] Step 1.5: Add Express request augmentation declaration file.
+- [x] Step 1.6: Add custom AppError type and type guard for normalized error handling.
+- [x] Step 1.7: Add shared DTO/domain type modules used by auth, emergency, notifications, accidents, profile.
+- [x] Verify: Run typecheck, run full tests, then smoke-check /health.
 
 #### Phase 2: Implementation
-- [ ] Step 2.1: Convert config and shared low-risk files first.
-- [ ] Verify: typecheck + focused unit tests.
-- [ ] Step 2.2: Convert middleware layer (requestId, logger, error, rate-limit, upload, auth).
-- [ ] Verify: middleware unit/integration tests and route smoke checks.
-- [ ] Step 2.3: Convert modules in dependency-safe order:
-- [ ] Step 2.3.a: auth
-- [ ] Step 2.3.b: profile
-- [ ] Step 2.3.c: notifications
-- [ ] Step 2.3.d: accidents
-- [ ] Step 2.3.e: centralUnit
-- [ ] Step 2.3.f: emergency
-- [ ] Verify: run targeted module tests after each module batch.
-- [ ] Step 2.4: Convert root composition files (src/routes, then src/app, then src/server).
-- [ ] Verify: full test suite + startup smoke on built output.
+- [x] Step 2.1: Convert config and shared low-risk files first.
+- [x] Verify: typecheck + focused unit tests.
+- [x] Step 2.2: Convert middleware layer (requestId, logger, error, rate-limit, upload, auth).
+- [x] Verify: middleware unit/integration tests and route smoke checks.
+- [x] Step 2.3: Convert modules in dependency-safe order:
+- [x] Step 2.3.a: auth
+- [x] Step 2.3.b: profile
+- [x] Step 2.3.c: notifications
+- [x] Step 2.3.d: accidents
+- [x] Step 2.3.e: centralUnit
+- [x] Step 2.3.f: emergency
+- [x] Verify: run targeted module tests after each module batch.
+- [x] Step 2.4: Convert root composition files (src/routes, then src/app, then src/server).
+- [x] Verify: full test suite + startup smoke on built output.
 
 #### Phase 3: Tests
-- [ ] Step 3.1: Keep .test.cjs tests running through migration; convert to .test.ts only after stable TS setup.
-- [ ] Step 3.2: Add/strengthen regression tests for:
-- [ ] Step 3.2.a: request augmentation (userId/userRole/requestId),
-- [ ] Step 3.2.b: custom AppError mapping,
-- [ ] Step 3.2.c: multipart JSON parser fallback,
-- [ ] Step 3.2.d: central unit inbound auth branches (proxy/mtls/off).
-- [ ] Step 3.3: Ensure all critical endpoint flows remain covered.
-- [ ] Verify: run full suite and compare with baseline (must stay green).
+- [x] Step 3.1: Keep .test.cjs tests running through migration; convert to .test.ts only after stable TS setup.
+- [x] Step 3.2: Add/strengthen regression tests for:
+- [x] Step 3.2.a: request augmentation (userId/userRole/requestId),
+- [x] Step 3.2.b: custom AppError mapping,
+- [x] Step 3.2.c: multipart JSON parser fallback,
+- [x] Step 3.2.d: central unit inbound auth branches (proxy/mtls/off).
+- [x] Step 3.3: Ensure all critical endpoint flows remain covered.
+- [x] Verify: run full suite and compare with baseline (must stay green).
 
 #### Phase 4: Cleanup
-- [ ] Step 4.1: Remove remaining JavaScript files in src.
-- [ ] Step 4.2: Switch to final strict TS-only mode (allowJs: false).
-- [ ] Step 4.3: Remove migration-only compatibility settings and redundant type aliases.
-- [ ] Step 4.4: Ensure no unnecessary any usage remains.
-- [ ] Step 4.5: Update README and operational docs for TypeScript build/run commands.
-- [ ] Verify: clean typecheck, clean build, all tests passing.
+- [x] Step 4.1: Remove remaining JavaScript files in src.
+- [x] Step 4.2: Switch to final strict TS-only mode (allowJs: false).
+- [x] Step 4.3: Remove migration-only compatibility settings and redundant type aliases.
+- [x] Step 4.4: Ensure no unnecessary any usage remains.
+- [x] Step 4.5: Update README and operational docs for TypeScript build/run commands.
+- [x] Verify: clean typecheck, clean build, all tests passing.
 
 ### Rollback Plan
 If something fails:
