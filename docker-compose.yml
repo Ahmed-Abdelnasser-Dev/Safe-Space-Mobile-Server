@@ -31,11 +31,15 @@ services:
       CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER: ${CENTRAL_UNIT_PROXY_SHARED_SECRET_HEADER:-x-central-unit-proxy-secret}
       CENTRAL_UNIT_PROXY_SHARED_SECRET: ${CENTRAL_UNIT_PROXY_SHARED_SECRET:?CENTRAL_UNIT_PROXY_SHARED_SECRET is required when using proxy inbound auth}
       CENTRAL_UNIT_BASE_URL: ${CENTRAL_UNIT_BASE_URL:-http://central-unit:8080}
+      FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${API_PORT:-3103}:3000"
+    volumes:
+      - ./.config/firebase:/app/.config/firebase:ro
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 10s
